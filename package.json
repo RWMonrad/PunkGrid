@@ -1,0 +1,27 @@
+{
+  "name": "punkgrid-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PunkGrid Reality Engine — canonical simulation core (Sprint 1, no generative AI)",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc -p tsconfig.build.json",
+    "seed": "npm run build && node dist/core/scripts/seed-glass-harbor.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "dependencies": {
+    "kysely": "^0.29.6",
+    "pg": "^8.23.1"
+  }
+}
