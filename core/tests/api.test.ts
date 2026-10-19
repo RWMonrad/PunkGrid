@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { GLASS_HARBOR } from '../src/glassHarbor.js';
 import { CompliantProvider } from '../src/providers.js';
 import { Engine } from '../src/engine.js';
-import { Api, type ApiRequest } from '../src/api.js';
+import { Api, InMemoryRunner, type ApiRequest } from '../src/api.js';
 import { membershipKey } from '../src/store.js';
 import type { ID } from '../src/domain.js';
 import { cid } from './helpers.js';
@@ -11,7 +11,7 @@ const T0 = Date.parse('2026-10-11T12:00:00.000Z');
 
 function harness() {
   const engine = new Engine(GLASS_HARBOR, new CompliantProvider(), { now: () => T0, seed: 20261011 });
-  const api = new Api(engine);
+  const api = new Api(new InMemoryRunner(engine));
   const owner = engine.registerUser('user_a');
   const intruder = engine.registerUser('user_b');
   return { engine, api, owner, intruder };
@@ -27,8 +27,10 @@ function post(api: Api, userId: ID, path: string, body: Record<string, unknown>,
   });
 }
 
-function get(api: Api, userId: ID, path: string) {
-  return api.handle({ method: 'GET', path, headers: {}, actor: { userId } });
+function get(api: Api, userId: ID, path: string, query?: Record<string, string>) {
+  // A GET carries its parameters in the query string, which `http.ts` hands the
+  // router as the body — so a test that means `?cursor=` says it the same way.
+  return api.handle({ method: 'GET', path, ...(query ? { body: query } : {}), headers: {}, actor: { userId } });
 }
 
 async function createWorld(api: Api, owner: ID) {
@@ -75,18 +77,69 @@ describe('HTTP boundary — contract section 11', () => {
     expect(mismatchedKey.status).toBe(400);
   });
 
-  it('answers a non-owner with 404 on reads and never discloses existence', async () => {
+  it('answers a non-owner with 404 on reads and writes alike, and never discloses existence', async () => {
     const { api, engine, owner, intruder } = harness();
     const { worldId } = await createWorld(api, owner);
 
     expect((await get(api, intruder, `/v1/worlds/${worldId}`)).status).toBe(404);
     expect((await get(api, intruder, `/v1/worlds/${worldId}/episodes`)).status).toBe(404);
-    expect((await get(api, intruder, '/v1/worlds')).body.items).toEqual([]);
+    expect(((await get(api, intruder, '/v1/worlds')).body.items as unknown[])).toEqual([]);
 
+    // A write to a world you cannot see is answered exactly like a read of it:
+    // 403 here would tell the caller the world exists (§14 leakage baseline).
     const write = await post(api, intruder, `/v1/worlds/${worldId}/choices`, { choiceId: 'confront_mara', actorIdentityId: 'idn_x', expectedWorldVersion: 1 });
-    expect(write.status).toBe(403);
-    expect(write.body.error).toMatchObject({ code: 'WORLD_ACCESS_DENIED' });
+    expect(write.status).toBe(404);
+    expect(write.body.error).toMatchObject({ code: 'NOT_FOUND' });
     expect(engine.store.worlds.get(worldId)!.stateVersion).toBe(1);
+  });
+
+  it('serves the whole story through the cursor instead of stopping at twenty', async () => {
+    // The play screen takes its newest scene from the end of this list, so a page
+    // that ends early without saying so is a world frozen on an old scene — measured
+    // on the dev world at version 21, where the route returned episodes 1–20 and
+    // `nextCursor: null`, which is the contract's `{items,nextCursor}` only in shape.
+    const { engine, api, owner } = harness();
+    const { worldId } = await createWorld(api, owner);
+    const genesis = [...engine.store.episodes.values()][0]!;
+    const scenes = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+    for (const v of scenes(2, 25)) {
+      engine.store.episodes.set(`ep_page_${v}`, {
+        episode: { ...genesis.episode, id: `ep_page_${v}`, worldId, fromEventSequence: v, throughEventSequence: v, worldStateVersion: v },
+        status: 'published',
+      });
+    }
+
+    const first = await get(api, owner, `/v1/worlds/${worldId}/episodes`, { limit: '20' });
+    expect(first.status).toBe(200);
+    const head = (first.body.items as { worldStateVersion: number }[]).map((e) => e.worldStateVersion);
+    expect(head).toEqual(scenes(1, 20));
+    expect(first.body.nextCursor).toBe('20');
+
+    const tail = await get(api, owner, `/v1/worlds/${worldId}/episodes`, { limit: '20', cursor: String(first.body.nextCursor) });
+    const rest = (tail.body.items as { worldStateVersion: number }[]).map((e) => e.worldStateVersion);
+    expect(rest).toEqual(scenes(21, 25));
+    expect(tail.body.nextCursor).toBeNull();
+
+    // A cursor is the ledger's own sequence, not a client's invention: garbage is a
+    // rejected request, not an empty page a reader would take as "the story ends here".
+    const junk = await get(api, owner, `/v1/worlds/${worldId}/episodes`, { cursor: 'not-a-sequence' });
+    expect(junk.status).toBe(400);
+    expect(junk.body.error).toMatchObject({ code: 'INVALID_SCHEMA' });
+
+    // Same for the page size — `slice(0, NaN)` answers with an empty list, which reads
+    // as a world with no story at all.
+    const badSize = await get(api, owner, `/v1/worlds/${worldId}/episodes`, { limit: 'plenty' });
+    expect(badSize.status).toBe(400);
+    expect(badSize.body.error).toMatchObject({ code: 'INVALID_SCHEMA' });
+  });
+
+  it('names a listed world by its rulepack so UI07 never prints a raw id (ADR-019)', async () => {
+    const { api, owner } = harness();
+    const { worldId } = await createWorld(api, owner);
+
+    const items = (await get(api, owner, '/v1/worlds')).body.items as Record<string, unknown>[];
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ worldId, rulepackId: 'glass-harbor-2034', status: 'active' });
   });
 
   it('maps a stale version to 409 with the current version in details', async () => {

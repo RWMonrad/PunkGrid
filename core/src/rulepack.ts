@@ -4,6 +4,7 @@
 // cooldowns and time-advance behaviour. Narrative output can never supply these.
 
 import type { ID } from './domain.js';
+import type { StyleConstraints } from './narrative.js';
 
 export type ActorRef = 'player' | ID;
 
@@ -54,6 +55,15 @@ export interface SettingInput {
   flags?: string[];
 }
 
+/** FR-04 (Master) and contract §5 step 5, harmonised by ADR-012: one interval for
+ *  every scene, genesis included. The engine issues the scene, so the engine is
+ *  what has to keep it inside the interval — narration cannot add a choice and a
+ *  client may not remove one (ADR-022). */
+export interface OfferPolicy {
+  min: number;
+  max: number;
+}
+
 export interface SettingConstraint {
   id: string;
   if: Partial<Pick<SettingInput, 'era' | 'location' | 'role'>>;
@@ -75,6 +85,14 @@ export interface WorldTemplate {
   facts: { id: ID; label: string; knownBy: ID[]; verified: boolean; visibility: 'owner' | 'participants' | 'world'; sensitivePhrase?: string }[];
   arcs: { id: ID; arcType: string; status: 'locked' | 'open' | 'resolved' | 'failed' }[];
   worldTime: string;
+  /** The opening clock for each supported era (ADR-023). A validated setting has to
+   *  move the world it creates — Master US03 — so the era cannot be a filter that
+   *  the genesis step ignores. Contract §12 fixes only the reference era's value,
+   *  which is therefore also `worldTime`. */
+  eraStarts: { era: string; worldTime: string }[];
+  /** What each supported role grants the player at genesis: the role capabilities
+   *  written into the snapshot and the title the cast is listed under (ADR-023). */
+  roleGrants: { role: string; roleIds: string[]; title: string }[];
   genesisChoiceIds: ID[];
 }
 
@@ -90,11 +108,14 @@ export interface RulePack {
   id: string;
   version: string;
   time: TimePolicy;
+  offerPolicy: OfferPolicy;
   templates: WorldTemplate[];
   choices: ChoiceRule[];
   surprises: SurpriseFamily[];
   surpriseBudgetPerDay: number;
   freeWorldQuota: number;
+  /** Contract 10 `style_constraints`. Absent means the prompt module's default. */
+  style?: StyleConstraints;
 }
 
 export function findTemplate(pack: RulePack, id: string): WorldTemplate | undefined {

@@ -9,7 +9,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "tsc -p tsconfig.build.json",
-    "seed": "npm run build && node dist/core/scripts/seed-glass-harbor.js"
+    "seed": "npm run build && node dist/core/scripts/seed-glass-harbor.js",
+    "eval:narrative": "npm run build && node dist/core/scripts/eval-narrative.js",
+    "migrate": "npm run build && node dist/core/scripts/migrate.js",
+    "serve": "npm run build && node dist/core/scripts/serve.js",
+    "worker": "npm run build && node dist/core/scripts/worker.js",
+    "token": "npm run build && node dist/core/scripts/token.js",
+    "loadtest": "npm run build && node dist/core/scripts/loadtest.js"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

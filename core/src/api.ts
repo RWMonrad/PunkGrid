@@ -1,11 +1,15 @@
-// HTTP boundary for the ten normative /v1 endpoints (contract section 11).
-// Framework-agnostic handler: a NestJS/Fastify adapter maps these onto routes
-// without changing the contract (ADR-011). No parallel endpoints are introduced.
+// HTTP boundary for the eleven /v1 endpoints (contract section 11 — ten world
+// routes and the ADR-018 report route).
+// Framework-agnostic handler: the node:http adapter in core/src/server maps
+// requests onto these routes, and a NestJS/Fastify adapter could do the same
+// without changing the contract (ADR-011, ADR-016). No parallel endpoints are
+// introduced here.
 
 import { randomUUID } from 'node:crypto';
 import type { Engine } from './engine.js';
 import { EngineError, err } from './errors.js';
 import type { ID } from './domain.js';
+import type { ModerationReason } from './store.js';
 import type { SettingInput } from './rulepack.js';
 
 export interface ApiRequest {
@@ -33,14 +37,38 @@ export function scopeOf(req: ApiRequest): { worldId: ID | null } {
   return { worldId: null };
 }
 
+/** How a request reaches an Engine that is authoritative for it. A test or a
+ *  single-process server answers from one long-lived Engine; the Postgres
+ *  server hydrates the aggregate inside a transaction per command (contract 3),
+ *  so routing has to happen inside a callback rather than against an Engine the
+ *  caller already holds. */
+export interface EngineRunner {
+  run<T>(req: ApiRequest, fn: (engine: Engine) => T | Promise<T>): Promise<T>;
+}
+
+export class InMemoryRunner implements EngineRunner {
+  constructor(private readonly engine: Engine) {}
+  async run<T>(_req: ApiRequest, fn: (engine: Engine) => T | Promise<T>): Promise<T> {
+    return fn(this.engine);
+  }
+}
+
+type RouteResult = { status: number; body: Record<string, unknown> };
+
 export class Api {
-  constructor(private engine: Engine) {}
+  constructor(
+    private readonly runner: EngineRunner,
+    /** Called for anything the routing does not understand — a persistence or
+     *  programming fault, not a domain rejection. The caller keeps the last word
+     *  on the response status. */
+    private readonly onUnhandled?: (error: unknown, info: ApiRequest) => void,
+  ) {}
 
   async handle(req: ApiRequest): Promise<ApiResponse> {
     const requestId = req.headers?.['x-request-id'] ?? `req_${randomUUID().slice(0, 8)}`;
     const headers = { 'x-request-id': requestId };
     try {
-      const route = await this.route(req, requestId);
+      const route = await this.runner.run(req, (engine) => this.route(req, requestId, engine));
       return { status: route.status, body: route.body, headers };
     } catch (e) {
       if (e instanceof EngineError) {
@@ -50,11 +78,12 @@ export class Api {
           headers,
         };
       }
-      throw e;
+      this.onUnhandled?.(e, req);
+      return { status: 500, body: { requestId, error: { code: 'INTERNAL_ERROR', message: 'Request failed' } }, headers };
     }
   }
 
-  private async route(req: ApiRequest, requestId: string): Promise<{ status: number; body: Record<string, unknown> }> {
+  private async route(req: ApiRequest, requestId: string, engine: Engine): Promise<RouteResult> {
     const userId = req.actor?.userId;
     if (!userId) throw err.unauthenticated();
 
@@ -71,7 +100,7 @@ export class Api {
     // POST /v1/worlds | GET /v1/worlds
     if (segments.length === 1 && segments[0] === 'worlds') {
       if (req.method === 'POST') {
-        const res = await this.engine.createWorld({
+        const res = await engine.createWorld({
           actorUserId: userId,
           mode: body.mode as 'create' | 'surprise',
           identityId: body.identityId as ID | undefined,
@@ -85,7 +114,7 @@ export class Api {
           body: { requestId, worldId: res.worldId, version: res.commandResult.newVersion, episodeId: res.episodeId, episodeStatus: res.episodeStatus },
         };
       }
-      return { status: 200, body: { requestId, items: this.engine.listWorlds(userId), nextCursor: null } };
+      return { status: 200, body: { requestId, items: engine.listWorlds(userId), nextCursor: null } };
     }
 
     if (segments[0] !== 'worlds' || !segments[1]) throw err.notFound();
@@ -95,17 +124,37 @@ export class Api {
     // GET /v1/worlds/{id}/episodes[/{episodeId}]
     if (req.method === 'GET' && sub === 'episodes') {
       if (segments[3]) {
-        const res = this.engine.getEpisode(userId, worldId, segments[3]);
+        const res = engine.getEpisode(userId, worldId, segments[3]);
         return { status: 200, body: { requestId, status: res.status, ...(res.episode ? { episode: res.episode } : {}) } };
       }
-      const page = this.engine.listEpisodes(userId, worldId, Number(body.limit ?? 20));
+      const page = engine.listEpisodes(userId, worldId, Number(body.limit ?? 20), (body.cursor as string) ?? null);
       return { status: 200, body: { requestId, items: page.items, nextCursor: page.nextCursor } };
+    }
+
+    // POST /v1/worlds/{id}/episodes/{episodeId}/reports — FR-11 / US13 (ADR-018).
+    // The eleventh route, and the only mutation that is not a world command: it
+    // carries a commandId for deduplication but no expectedWorldVersion, because
+    // reporting a story changes nothing about the story.
+    if (req.method === 'POST' && sub === 'episodes' && segments[3] && segments[4] === 'reports') {
+      if (!commandId) throw err.invalidSchema('commandId is required to report an episode');
+      const reporter = body.actorIdentityId as ID;
+      if (!reporter) throw err.invalidSchema('actorIdentityId is required to report an episode');
+      const res = engine.reportEpisode({
+        actorUserId: userId,
+        worldId,
+        episodeId: segments[3],
+        reporterIdentityId: reporter,
+        reason: body.reason as ModerationReason,
+        ...(typeof body.note === 'string' ? { note: body.note } : {}),
+        commandId,
+      });
+      return { status: 201, body: { requestId, reportId: res.reportId, receipt: res.receipt, status: res.status } };
     }
 
     // GET /v1/worlds/{id}
     if (req.method === 'GET' && !sub) {
-      const view = this.engine.getWorld(userId, worldId);
-      return { status: 200, body: { requestId, world: view.world, stateVersion: view.stateVersion, summary: view.summary, choices: view.choices } };
+      const view = engine.getWorld(userId, worldId);
+      return { status: 200, body: { requestId, world: view.world, identityId: view.identityId, stateVersion: view.stateVersion, summary: view.summary, choices: view.choices } };
     }
 
     if (req.method !== 'POST' || !sub) throw err.notFound();
@@ -117,34 +166,36 @@ export class Api {
     const ctx = { actorUserId: userId, worldId, actorIdentityId, expectedWorldVersion: expectedVersion, commandId };
 
     if (sub === 'choices') {
-      const commandResult = await this.engine.submitChoice({ ...ctx, choiceId: body.choiceId as ID });
-      return { status: 200, body: { requestId, commandResult, ...this.episodeFor(worldId, commandResult.newVersion) } };
+      const commandResult = await engine.submitChoice({ ...ctx, choiceId: body.choiceId as ID });
+      return { status: 200, body: { requestId, commandResult, ...this.episodeFor(engine, worldId, commandResult.newVersion) } };
     }
     if (sub === 'surprises') {
-      const commandResult = await this.engine.requestSurprise(ctx);
-      return { status: 200, body: { requestId, commandResult, ...this.episodeFor(worldId, commandResult.newVersion) } };
+      const commandResult = await engine.requestSurprise(ctx);
+      return { status: 200, body: { requestId, commandResult, ...this.episodeFor(engine, worldId, commandResult.newVersion) } };
     }
     if (sub === 'resume') {
-      const commandResult = await this.engine.resumeWorld(ctx);
-      return { status: 200, body: { requestId, commandResult, ...this.episodeFor(worldId, commandResult.newVersion) } };
+      const commandResult = await engine.resumeWorld(ctx);
+      return { status: 200, body: { requestId, commandResult, ...this.episodeFor(engine, worldId, commandResult.newVersion) } };
     }
     if (sub === 'pause') {
-      const commandResult = await this.engine.pauseWorld(ctx);
+      const commandResult = await engine.pauseWorld(ctx);
       return { status: 200, body: { requestId, worldId, status: 'paused', version: commandResult.newVersion, commandResult } };
     }
     if (sub === 'archive') {
-      const commandResult = await this.engine.archiveWorld(ctx);
+      const commandResult = await engine.archiveWorld(ctx);
       return { status: 200, body: { requestId, worldId, status: 'archived', version: commandResult.newVersion, commandResult } };
     }
     throw err.notFound();
   }
 
-  private episodeFor(worldId: ID, version: number): { episodeStatus: string; episodeId?: ID } {
-    const rows = [...this.engine.store.episodes.values()].filter((e) => e.episode.worldId === worldId && e.episode.worldStateVersion === version);
+  private episodeFor(engine: Engine, worldId: ID, version: number): { episodeStatus: string; episodeId?: ID } {
+    const rows = [...engine.store.episodes.values()].filter((e) => e.episode.worldId === worldId && e.episode.worldStateVersion === version);
     const row = rows.at(-1);
     if (!row) return { episodeStatus: 'none' };
-    return row.status === 'published' || row.status === 'fallback'
-      ? { episodeStatus: 'published', episodeId: row.episode.id }
-      : { episodeStatus: row.status };
+    // The id travels with every state: a client that is told `pending` has to
+    // know which episode to poll (§11 allows `episodeId?`, not `episodeId` only
+    // once prose exists).
+    const settled = row.status === 'published' || row.status === 'fallback';
+    return { episodeStatus: settled ? 'published' : row.status, episodeId: row.episode.id };
   }
 }

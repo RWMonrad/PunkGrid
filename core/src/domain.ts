@@ -1,7 +1,7 @@
 // Domain vocabulary, versioned type contracts and canonical primitives.
 // Implements REALITY_ENGINE_CORE_CONTRACT_v1.0 sections 2, 4, 6.
 
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 export type ID = string;
 export type ISOTime = string;
@@ -160,6 +160,19 @@ export function mulberry32(seed: number): Rng {
 }
 
 const B32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+/** The seed a process takes when nobody asked for a reproducible run.
+ *
+ *  Every id `makeIdFactory` mints is a pure function of the seed, so two processes
+ *  that share one seed mint the same worlds in the same order. Measured 2026-10-12
+ *  with two `core/scripts/serve.ts` processes: the wall clock put both on the same
+ *  number, the second `POST /v1/worlds` collided with the first world's id, and the
+ *  store answered 500 on `world_memberships_world_id_identity_id_key` — after the
+ *  `on conflict (id) do update` had already rewritten the other world's head row.
+ *  A clock is therefore not a seed; this has to be a draw. */
+export function defaultSeed(): number {
+  return randomBytes(4).readUInt32BE(0);
+}
 
 export function makeIdFactory(seed: number) {
   const rng = mulberry32(seed);

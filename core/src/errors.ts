@@ -15,7 +15,10 @@ export type ErrorCode =
   | 'NARRATIVE_UNAVAILABLE'
   | 'UNKNOWN_COMMAND_TYPE'
   | 'UNKNOWN_EVENT_TYPE'
-  | 'INVALID_BLUEPRINT';
+  | 'INVALID_BLUEPRINT'
+  /** Emitted by the HTTP adapter for a fault outside the engine's vocabulary
+   *  (ADR-016). No engine path produces it. */
+  | 'INTERNAL_ERROR';
 
 export class EngineError extends Error {
   constructor(
@@ -43,6 +46,14 @@ export const err = {
   precondition: (ruleCode: string, msg: string) =>
     new EngineError('RULE_PRECONDITION_FAILED', 422, msg, { ruleCode }),
   invalidChoice: (choiceId: string) => new EngineError('INVALID_CHOICE', 422, 'Choice is not valid for this world version', { choiceId }),
+  /** Transport-level failures raised by the HTTP adapter, never by the engine
+   *  (ADR-016). The seventeen codes above are the contract section 11 set. */
+  methodNotAllowed: (method: string, path: string) =>
+    new EngineError('INVALID_SCHEMA', 405, `Only GET and POST are defined for ${path}`, { method }),
+  payloadTooLarge: (limitBytes: number) =>
+    new EngineError('INVALID_SCHEMA', 413, `Request body exceeds ${limitBytes} bytes`, { limitBytes }),
+  rateLimited: (retryAfterSeconds: number, msg = 'Too many requests') =>
+    new EngineError('RATE_LIMITED', 429, msg, { retryAfterSeconds }),
   budgetExceeded: (msg = 'World spend budget exceeded') => new EngineError('WORLD_BUDGET_EXCEEDED', 429, msg),
   narrativeUnavailable: (msg = 'Narrative provider unavailable') => new EngineError('NARRATIVE_UNAVAILABLE', 503, msg),
   unknownCommand: (t: string) => new EngineError('UNKNOWN_COMMAND_TYPE', 400, 'Unknown command type in v1', { commandType: t }),

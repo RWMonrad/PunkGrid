@@ -1,8 +1,14 @@
 // Deterministic fake providers. The real AI gateway is Sprint 3 (contract 10,
 // ADR-008); these exercise the same boundary and are the only providers used by
 // the golden suite, so tests never depend on nondeterministic prose.
+//
+// `CompliantProvider` is also what a shipped server runs when no gateway is
+// configured (`providerFromEnv`), so its prose is read by a player and not only by
+// a test: it renders through `storedProse`, the same deterministic voice as the
+// engine's fallback copy, rather than a note about the ledger.
 
 import type { NarrativeProvider, NarrativeRequest, NarrativeResponse } from './narrative.js';
+import { storedProse } from './narrative.js';
 
 export class CompliantProvider implements NarrativeProvider {
   calls = 0;
@@ -11,12 +17,11 @@ export class CompliantProvider implements NarrativeProvider {
   narrate(req: NarrativeRequest): NarrativeResponse {
     this.calls += 1;
     this.lastRequest = req;
-    const names = req.characterProfiles.map((c) => c.name).slice(0, 3).join(', ');
-    const text = [
-      `Episode for world time ${req.worldTime}.`,
-      `${req.eventExcerpts.length} event(s) describe what changed around ${names}.`,
-      'The offer still sits unanswered, and the harbour keeps its accounts.',
-    ].join(' ');
+    const text = storedProse({
+      worldTime: req.worldTime,
+      eventTypes: req.eventExcerpts.map((e) => e.type),
+      cast: req.characterProfiles.map((c) => c.name),
+    });
     return {
       episode_text: text,
       referenced_event_ids: [...req.eventIds],
@@ -84,6 +89,29 @@ export class PolicyBlockedProvider implements NarrativeProvider {
       choice_copy_by_id: Object.fromEntries(req.allowedChoiceIds.map((id) => [id, 'x'])),
       content_flags: ['policy_blocked'],
       modelId: 'fake-unsafe',
+    };
+  }
+}
+
+/** Schema-obedient and silent about its own output: no `content_flags` of its
+ *  own, whatever text the test asks for. This is the shape that proves the
+ *  engine's screen runs *in addition to* the provider's flags (§10) — a gateway
+ *  that says nothing about what it produced is still stopped here. */
+export class ScriptedTextProvider implements NarrativeProvider {
+  calls = 0;
+  constructor(private readonly text: string) {}
+
+  narrate(req: NarrativeRequest): NarrativeResponse {
+    this.calls += 1;
+    return {
+      episode_text: this.text,
+      referenced_event_ids: [...req.eventIds],
+      choice_copy_by_id: Object.fromEntries(req.allowedChoiceIds.map((id) => [id, `Take action: ${id}`])),
+      mentioned_fact_ids: [],
+      content_flags: [],
+      modelId: 'fake-scripted',
+      inputTokens: 600,
+      outputTokens: 300,
     };
   }
 }

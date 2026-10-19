@@ -7,8 +7,17 @@ export const GLASS_HARBOR: RulePack = {
   id: 'glass-harbor-2034',
   version: '1.0',
   time: { tickMinutes: 360, maxCatchupTicks: 5, maxWorldTimeJumpMinutes: 1440, ambientProgressPerTick: 1 },
+  // FR-04 harmonised with ADR-012: the same interval for genesis and for every later scene.
+  offerPolicy: { min: 2, max: 4 },
   surpriseBudgetPerDay: 2,
   freeWorldQuota: 1,
+  style: {
+    pov: 'second person, present tense',
+    tone: 'dry, tense, near-future noir',
+    language: 'en',
+    lengthTarget: 140,
+    forbidden: ['system', 'prompt', 'token', 'model'],
+  },
   templates: [
     {
       id: 'glass-harbor-2034',
@@ -33,6 +42,21 @@ export const GLASS_HARBOR: RulePack = {
       playerCharacterId: 'char_player',
       playerGoals: ['retain_control', 'protect_employees', 'discover_offer_provenance'],
       worldTime: '2034-09-15T09:00:00.000Z',
+      // The reference era's start is contract §12's own value; the other two are
+      // fixture constants in the same season and hour, so a validated era moves the
+      // clock it opens on instead of being filtered and then ignored (ADR-023).
+      eraStarts: [
+        { era: '2034', worldTime: '2034-09-15T09:00:00.000Z' },
+        { era: '2019', worldTime: '2019-09-16T09:00:00.000Z' },
+        { era: '1888', worldTime: '1888-09-15T09:00:00.000Z' },
+      ],
+      // `founder-ceo` is §12's fixed reference role. The other two grant the role
+      // capability the player named on the setup screen, under the same company.
+      roleGrants: [
+        { role: 'founder-ceo', roleIds: ['founder_ceo'], title: 'Founder/CEO, Helix Transit' },
+        { role: 'investigator', roleIds: ['investigator'], title: 'Investigator, Helix Transit' },
+        { role: 'operations-director', roleIds: ['operations_director'], title: 'Operations director, Helix Transit' },
+      ],
       characters: [
         { id: 'char_player', name: 'Alex Vale', isPlayer: true, roleIds: ['founder_ceo'], goals: ['retain_control', 'protect_employees', 'discover_offer_provenance'], resources: { cash: 100, influence: 60, credibility: 50 }, profile: { title: 'Founder/CEO, Helix Transit' } },
         { id: 'char_mara', name: 'Mara Venn', isPlayer: false, roleIds: ['cofounder'], goals: ['financial_stability'], resources: {}, profile: { knows: ['fact_offer'] } },
@@ -135,6 +159,7 @@ export const GLASS_HARBOR: RulePack = {
       requires: [
         { knowsFact: { character: 'player', factId: 'fact_memo_claim' } },
         { arcStatus: { arc: 'arc_hidden_link', status: 'locked' } },
+        { resource: { character: 'player', key: 'cash', min: 5 } },
       ],
       effects: {
         resources: [{ character: 'player', key: 'cash', delta: -5 }],

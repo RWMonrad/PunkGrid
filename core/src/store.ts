@@ -31,6 +31,17 @@ export interface EntitlementRow { userId: ID; plan: 'free' | 'premium'; activeUn
 export interface OfferedChoiceRow { choiceId: ID; worldId: ID; boundVersion: number; ruleId: string; copy: string }
 export interface ScheduledEventRow { id: ID; worldId: ID; dueWorldTime: ISOTime; eventFamily: string; rulepackVersion: string; idempotencyKey: string; status: 'pending' | 'claimed' | 'completed' | 'failed'; attempts: number; maxAttempts: number }
 
+/** FR-11 / US13 (ADR-018). Keyed by commandId rather than by the case id, so a
+ *  re-sent report finds the case it already opened. `excerpt` is a bounded
+ *  fragment: §15 keeps operational records to a reason code and a reference. */
+export type ModerationReason = 'sexual_content' | 'violence' | 'self_harm' | 'real_person' | 'offensive_language' | 'other';
+
+export interface ModerationCaseRow {
+  id: ID; commandId: ID; worldId: ID; episodeId: ID; reporterUserId: ID; reporterIdentityId: ID;
+  reason: ModerationReason; categories: string[]; excerpt: string; reporterNote: string | null;
+  status: 'open' | 'reviewing' | 'actioned' | 'dismissed'; createdAt: ISOTime;
+}
+
 export class Store {
   readonly users = new Map<ID, { id: ID; createdAt: ISOTime }>();
   readonly identities = new Map<ID, IdentityRow>();
@@ -39,7 +50,7 @@ export class Store {
   readonly blueprints = new Map<ID, { worldId: ID; schemaVersion: string; seed: number; setting: Record<string, unknown>; constraints: Record<string, unknown>; validatedAt: ISOTime }>();
   readonly characters = new Map<string, CharacterRow>();
   readonly facts = new Map<string, FactRow>();
-  readonly arcs = new Map<ID, ArcRow>();
+  readonly arcs = new Map<string, ArcRow>();
   readonly events = new Map<ID, DomainEvent[]>();
   readonly snapshots = new Map<string, SnapshotRow>();
   readonly commands = new Map<ID, CommandRow>();
@@ -48,6 +59,7 @@ export class Store {
   readonly entitlements = new Map<ID, EntitlementRow>();
   readonly offeredChoices = new Map<ID, OfferedChoiceRow>();
   readonly scheduledEvents = new Map<ID, ScheduledEventRow>();
+  readonly moderationCases = new Map<ID, ModerationCaseRow>();
   readonly outbox: { worldId: ID; version: number; episodeId: ID; kind: string }[] = [];
   readonly audit: { kind: string; worldId: ID; at: ISOTime }[] = [];
   /** How many audit rows PgStore has already written to operation_log. Advanced
@@ -65,7 +77,14 @@ export class Store {
   latestSnapshot(worldId: ID): SnapshotRow {
     const w = this.worlds.get(worldId);
     if (!w) throw err.notFound();
-    const snap = this.snapshots.get(snapshotKey(worldId, w.stateVersion));
+    return this.snapshotAt(worldId, w.stateVersion);
+  }
+
+  /** Every committed version is a row of its own (`world_snapshots` has
+   *  `(world_id, version)` as its key and is immutable), so a worker that lags
+   *  behind the API can still read the state an episode was committed against. */
+  snapshotAt(worldId: ID, version: number): SnapshotRow {
+    const snap = this.snapshots.get(snapshotKey(worldId, version));
     if (!snap) throw err.notFound('Committed snapshot missing');
     return snap;
   }
@@ -92,4 +111,7 @@ export class Store {
 export function membershipKey(worldId: ID, userId: ID) { return `${worldId}|${userId}`; }
 export function factKey(worldId: ID, factId: ID) { return `${worldId}|${factId}`; }
 export function characterKey(worldId: ID, characterId: ID) { return `${worldId}|${characterId}`; }
+// An arc is a row of one world: the template ids ('arc_acquisition', …) repeat in
+// every world created from the same rulepack, so the bare id cannot be a key.
+export function arcKey(worldId: ID, arcId: ID) { return `${worldId}|${arcId}`; }
 export function snapshotKey(worldId: ID, version: number) { return `${worldId}|${version}`; }

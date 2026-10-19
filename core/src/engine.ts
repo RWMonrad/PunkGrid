@@ -13,10 +13,25 @@ import type { GenesisPayload } from './reducer.js';
 import type { Effect, Precondition, RulePack, SettingInput, SurpriseFamily, WorldTemplate } from './rulepack.js';
 import { findChoice } from './rulepack.js';
 import {
-  Store, characterKey, factKey, membershipKey, snapshotKey,
-  type EpisodeRow, type FactRow, type OfferedChoiceRow, type ScheduledEventRow,
+  Store, characterKey, factKey, arcKey, membershipKey, snapshotKey,
+  type EpisodeRow, type FactRow, type ModerationCaseRow, type ModerationReason, type OfferedChoiceRow, type ScheduledEventRow,
 } from './store.js';
 import { fallbackText, validateNarrative, type NarrativeProvider, type NarrativeRequest } from './narrative.js';
+import { containsInjectionAttempt, clip, minimiseForCase, screenText } from './moderation.js';
+import { DEFAULT_STYLE } from './ai/prompt.js';
+
+/** The reasons a player can choose when reporting (FR-11). They are the client's
+ *  vocabulary, deliberately coarser than the screen's categories, and the same
+ *  six values the `moderation_reason` enum admits (ADR-018). */
+const REASON_CODES = new Set<ModerationReason>([
+  'sexual_content', 'violence', 'self_harm', 'real_person', 'offensive_language', 'other',
+]);
+
+/** US13 asks for a receipt the player can quote to support. It is derived from
+ *  the case id, so a re-sent report gives the same receipt rather than a new one. */
+function receiptFor(c: ModerationCaseRow): string {
+  return `PG-RPT-${c.id.replace(/^case_/, '').slice(-8).toUpperCase()}`;
+}
 
 export interface StagedEvent {
   eventId: ID;
@@ -29,9 +44,21 @@ export interface StagedEvent {
 
 export interface WorldView {
   world: World;
+  /** The caller's own identity in this world: the value a mutation body has to
+   *  name as `actorIdentityId`. No normative route let a client learn it before
+   *  ADR-016, which made the /v1 mutations unusable. */
+  identityId: ID;
   stateVersion: number;
   summary: { worldTime: ISOTime; arcs: Record<ID, string>; resources: Record<string, number> };
-  choices: { choiceId: ID; label: string; copy: string }[];
+  choices: IssuedChoice[];
+}
+
+/** One server-issued choice in a scene. A client may render these and submit
+ *  their ids, and nothing outside this list exists for the player (FR-04). */
+export interface IssuedChoice {
+  choiceId: ID;
+  label: string;
+  copy: string;
 }
 
 /** State the engine cannot keep in process memory, because a server starts a
@@ -52,6 +79,10 @@ export interface MutationOutcome {
 }
 
 const DAY_MS = 86_400_000;
+
+/** The largest page any list route will answer with. A client asks for a size, the
+ *  engine decides whether it can afford it. */
+const MAX_PAGE = 200;
 
 export class Engine {
   readonly store: Store;
@@ -106,7 +137,16 @@ export class Engine {
     if (!this.store.users.has(userId)) throw err.unauthenticated();
     return [...this.store.worlds.values()]
       .filter((w) => w.ownerUserId === userId)
-      .map((w) => ({ worldId: w.id, status: w.status, worldTime: w.worldTime, stateVersion: w.stateVersion }));
+      .map((w) => ({
+        worldId: w.id,
+        identityId: this.identityOf(userId, w.id),
+        // UI07 has to name the world without printing its id, and the list is the
+        // only read a resumed player makes before opening a world (ADR-019).
+        rulepackId: w.rulepackId,
+        status: w.status,
+        worldTime: w.worldTime,
+        stateVersion: w.stateVersion,
+      }));
   }
 
   getWorld(userId: ID, worldId: ID): WorldView {
@@ -115,6 +155,7 @@ export class Engine {
     const player = this.playerCharacter(worldId)!;
     return {
       world: { ...world, status: this.store.worlds.get(worldId)!.status },
+      identityId: this.identityOf(userId, worldId),
       stateVersion: world.stateVersion,
       summary: {
         worldTime: snap.state.worldTime,
@@ -125,14 +166,31 @@ export class Engine {
     };
   }
 
-  listEpisodes(userId: ID, worldId: ID, limit = 20) {
+  /** The contract's «paginated visible episodes» (API table, `GET
+   *  /v1/worlds/{id}/episodes`): a page of the story in the order it happened, and a
+   *  cursor that says whether another page exists.
+   *
+   *  The cursor is the `fromEventSequence` of the last episode on the page, because
+   *  that is the column the story is already ordered by and the index is on it.
+   *  Measured 2026-10-13 on the dev world at version 21: this method returned the
+   *  first twenty episodes and `nextCursor: null`, and the play screen — whose newest
+   *  scene is the last item of the list it fetches (`play.ts`) — read Episode 20 for
+   *  every decision after that. A list that ends early without saying so is not a
+   *  truncated read, it is a lost ending. */
+  listEpisodes(userId: ID, worldId: ID, limit = 20, cursor: string | null = null) {
     this.authorizeRead(userId, worldId);
-    const items = [...this.store.episodes.values()]
-      .filter((e) => e.episode.worldId === worldId)
-      .sort((a, b) => a.episode.fromEventSequence - b.episode.fromEventSequence)
-      .slice(0, limit)
-      .map((e) => ({ ...e.episode, status: e.status }));
-    return { items, nextCursor: null as string | null };
+    const want = Number(limit);
+    if (!Number.isFinite(want) || want < 1) throw err.invalidSchema('limit must be a page size of at least one');
+    const size = Math.min(MAX_PAGE, Math.trunc(want));
+    const after = cursor === null || cursor === '' ? 0 : Number(cursor);
+    if (!Number.isFinite(after)) throw err.invalidSchema('cursor must be an episode sequence');
+    const rest = [...this.store.episodes.values()]
+      .filter((e) => e.episode.worldId === worldId && e.episode.fromEventSequence > after)
+      .sort((a, b) => a.episode.fromEventSequence - b.episode.fromEventSequence);
+    const page = rest.slice(0, size);
+    const items = page.map((e) => ({ ...e.episode, status: e.status }));
+    const last = items[items.length - 1];
+    return { items, nextCursor: rest.length > size && last ? String(last.fromEventSequence) : null as string | null };
   }
 
   getEpisode(userId: ID, worldId: ID, episodeId: ID) {
@@ -140,6 +198,63 @@ export class Engine {
     const row = this.store.episodes.get(episodeId);
     if (!row || row.episode.worldId !== worldId) throw err.notFound();
     return { status: row.status, episode: row.status === 'published' || row.status === 'fallback' ? row.episode : undefined };
+  }
+
+  /** FR-11 / US13 (ADR-018): report an episode from inside the app.
+   *
+   *  Deliberately not a canonical command: a report changes no world state, so it
+   *  takes no `expectedWorldVersion` and writes no event. What it does write is a
+   *  moderation case whose content is a bounded excerpt, because §15 keeps
+   *  operational records to a reason code and a pseudonymous reference. The
+   *  commandId is the dedupe key, so a double-tapped report button yields the
+   *  case it already opened rather than a second one. */
+  reportEpisode(input: {
+    actorUserId: ID; worldId: ID; episodeId: ID; reporterIdentityId: ID;
+    reason: ModerationReason; note?: string; commandId: ID;
+  }): { reportId: ID; receipt: string; status: 'open' | 'duplicate' } {
+    // Same ordering as the command path: the dedupe key is only readable to the
+    // account that owns the world the episode lives in.
+    this.authorizeRead(input.actorUserId, input.worldId);
+    const existing = this.store.moderationCases.get(input.commandId);
+    if (existing) {
+      if (existing.episodeId !== input.episodeId || existing.reason !== input.reason) throw err.idempotencyMismatch();
+      return { reportId: existing.id, receipt: receiptFor(existing), status: 'duplicate' };
+    }
+
+    if (!REASON_CODES.has(input.reason)) {
+      throw err.invalidSchema(`reason must be one of ${[...REASON_CODES].join(', ')}`, { reason: input.reason });
+    }
+    this.assertActorIdentity(input.worldId, input.reporterIdentityId);
+    const row = this.store.episodes.get(input.episodeId);
+    if (!row || row.episode.worldId !== input.worldId) throw err.notFound();
+    if (row.status !== 'published' && row.status !== 'fallback') {
+      throw err.precondition('EPISODE_NOT_PUBLISHED', 'There is no story text to report yet');
+    }
+
+    const caseRow: ModerationCaseRow = {
+      id: this.ids('case'),
+      commandId: input.commandId,
+      worldId: input.worldId,
+      episodeId: input.episodeId,
+      reporterUserId: input.actorUserId,
+      reporterIdentityId: input.reporterIdentityId,
+      reason: input.reason,
+      categories: screenText(row.episode.content).matched,
+      excerpt: minimiseForCase(row.episode.content, input.episodeId),
+      reporterNote: input.note === undefined ? null : clip(input.note, 200),
+      status: 'open',
+      createdAt: this.nowIso(),
+    };
+    this.store.moderationCases.set(input.commandId, caseRow);
+    this.store.audit.push({ kind: `episode_reported:${input.reason}`, worldId: input.worldId, at: this.nowIso() });
+    return { reportId: caseRow.id, receipt: receiptFor(caseRow), status: 'open' };
+  }
+
+  /** The reviewer queue, read by the operations surface rather than the game. */
+  listModerationCases(worldId?: ID) {
+    return [...this.store.moderationCases.values()]
+      .filter((c) => worldId === undefined || c.worldId === worldId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
   /** POV filter (FR-08): facts a character is authorized to know. */
@@ -174,6 +289,14 @@ export class Engine {
     const commandId = input.commandId ?? this.ids('cmd');
     const hash = requestHash({ kind: 'world.create', body: input });
     const replayed = this.store.commands.get(commandId);
+    // The stored command is read by the account that wrote it and by nobody else —
+    // the same order `choose` keeps, where membership is tested before the lookup
+    // (SECURITY.md F-S8). The hash covers the whole input including `actorUserId`, so
+    // a foreign account already fails the comparison below, but that is a property of
+    // the hash and not of this route: a narrower hash would return another account's
+    // world id and `CommandResult` here, and the create below would then write its own
+    // row over theirs.
+    if (replayed && replayed.actorUserId !== input.actorUserId) throw err.idempotencyMismatch();
     if (replayed) {
       if (replayed.requestHash !== hash) throw err.idempotencyMismatch();
       const episodeId = [...this.store.episodes.values()].find((e) => e.episode.worldId === replayed.worldId)?.episode.id ?? '';
@@ -197,13 +320,22 @@ export class Engine {
       const owned = this.store.identities.get(identityId);
       if (!owned || owned.ownerUserId !== input.actorUserId) throw err.precondition('IDENTITY_NOT_OWNED', 'Identity is not owned by this account');
 
-      const genesisTime = new Date(Date.parse(template.worldTime)).toISOString();
+      // The setting the pipeline validated is what the world opens on, not the
+      // template's reference defaults (Master US03, ADR-023). `validateSetting`
+      // admits only values that carry a start, so these lookups cannot miss.
+      const eraStart = template.eraStarts.find((e) => e.era === setting.era)!;
+      const roleGrant = template.roleGrants.find((g) => g.role === setting.role)!;
+      const genesisTime = new Date(Date.parse(eraStart.worldTime)).toISOString();
       const offerFlags = Object.fromEntries(template.genesisChoiceIds.map((c) => [`offerable:${c}`, true]));
 
       const genesis: GenesisPayload = {
         templateId: template.id,
         worldTime: genesisTime,
-        characters: template.characters.map((c) => ({ id: c.id, status: 'active', roleIds: c.roleIds, goals: c.goals, resources: { ...c.resources } })),
+        characters: template.characters.map((c) => ({
+          id: c.id, status: 'active' as const,
+          roleIds: c.id === template.playerCharacterId ? [...roleGrant.roleIds] : c.roleIds,
+          goals: c.goals, resources: { ...c.resources },
+        })),
         relationships: template.relationships,
         arcs: template.arcs,
         facts: template.facts.map((f) => ({ id: f.id, knownBy: f.knownBy })),
@@ -248,12 +380,16 @@ export class Engine {
         constraints: { templateId: template.id, flags: setting.flags ?? [] }, validatedAt: this.nowIso(),
       });
       for (const c of template.characters) {
-        this.store.characters.set(characterKey(worldId, c.id), { id: c.id, worldId, ownerIdentityId: c.id === template.playerCharacterId ? identityId : null, name: c.name, profile: c.profile });
+        const isPlayer = c.id === template.playerCharacterId;
+        this.store.characters.set(characterKey(worldId, c.id), {
+          id: c.id, worldId, ownerIdentityId: isPlayer ? identityId : null, name: c.name,
+          profile: isPlayer ? { ...c.profile, title: roleGrant.title } : c.profile,
+        });
       }
       for (const f of template.facts) {
         this.store.facts.set(factKey(worldId, f.id), { worldId, factId: f.id, label: f.label, verified: f.verified, visibility: f.visibility, sensitivePhrase: f.sensitivePhrase });
       }
-      for (const a of template.arcs) this.store.arcs.set(a.id, { id: a.id, worldId, arcType: a.arcType, status: a.status });
+      for (const a of template.arcs) this.store.arcs.set(arcKey(worldId, a.id), { id: a.id, worldId, arcType: a.arcType, status: a.status });
       this.store.scheduledEvents.set(scheduled.id, scheduled);
       this.resumeFallback.set(worldId, this.wallNow);
 
@@ -280,11 +416,24 @@ export class Engine {
     if (!template.allowedLocations.includes(setting.location)) throw err.invalidBlueprint('Location is not supported', { location: setting.location });
     if (!template.allowedEras.includes(setting.era)) throw err.invalidBlueprint('Era is not supported', { era: setting.era });
     if (!template.allowedRoles.includes(setting.role)) throw err.invalidBlueprint('Role is not supported', { role: setting.role });
+    // A supported value the pack cannot start a world with is a broken pack, not a
+    // player error: fail loudly instead of opening on the reference era's clock.
+    if (!template.eraStarts.some((e) => e.era === setting.era)) throw err.invalidBlueprint('Era has no opening time in this world', { era: setting.era });
+    if (!template.roleGrants.some((g) => g.role === setting.role)) throw err.invalidBlueprint('Role grants no capabilities in this world', { role: setting.role });
     for (const c of template.constraints) {
       const matches = Object.entries(c.if).every(([k, v]) => (setting as unknown as Record<string, string>)[k] === v);
       if (matches && !c.requireFlags.every((f) => flags.has(f))) {
         throw err.invalidBlueprint(c.message, { constraintId: c.id, requires: c.requireFlags });
       }
+    }
+    // §15 screens input as well as output. Everything above is an enum check, so
+    // the only text a player contributes is the genre and the flags — and that
+    // text goes into the narration prompt as data.
+    const freeText = [setting.genre ?? '', ...(setting.flags ?? [])].join(' ');
+    const verdict = screenText(freeText);
+    if (verdict.blocked) throw err.invalidBlueprint('Setting is outside the content policy', { contentPolicy: verdict.matched });
+    if (containsInjectionAttempt(freeText)) {
+      throw err.invalidBlueprint('Setting may not contain instructions for the narrator', { contentPolicy: ['prompt_injection'] });
     }
     return setting;
   }
@@ -308,7 +457,18 @@ export class Engine {
       const failing = this.failingPrecondition(state, rule.requires, world.id);
       if (failing) throw err.precondition(failing, `Choice ${rule.id} is not currently possible`);
       this.assertReferencedCharacters(world.id, rule.effects);
-      return this.buildEffectEvents(state, rule.effects, rule.id, world.id, input.actorIdentityId);
+      // Being unlocked and payable is not enough: the server issues the scene, so
+      // the scene is also the only thing the player may act on. An offer the
+      // engine trimmed away to stay inside FR-04's interval was never on screen
+      // (ADR-022). The checks above run first, so a client learns 'not allowed'
+      // and 'this rule is broken' before it learns 'not part of this scene'.
+      const issued = this.choicesAt(world.id, world.stateVersion);
+      if (!issued.some((c) => c.choiceId === input.choiceId)) {
+        throw err.precondition('CHOICE_NOT_OFFERED', 'That choice is not in the current scene.');
+      }
+      const built = this.buildEffectEvents(state, rule.effects, rule.id, world.id);
+      this.assertSceneFloor(state, world.id, input.choiceId, issued, built.events);
+      return built;
     });
   }
 
@@ -381,14 +541,14 @@ export class Engine {
       const missing = this.failingPrecondition(state, family.requires, world.id);
       if (missing) return { events: [], noOpReason: 'NO_ELIGIBLE_SURPRISE' };
       this.assertReferencedCharacters(world.id, family.effects);
-      const built = this.buildEffectEvents(state, family.effects, `surprise:${family.id}`, world.id, input.actorIdentityId);
+      const built = this.buildEffectEvents(state, family.effects, `surprise:${family.id}`, world.id);
       const surpriseEventId = this.ids('evt');
       const trigger: StagedEvent = {
         eventId: surpriseEventId, type: 'surprise.triggered',
         payload: {
           familyId: family.id, causalArc: family.causalArc, copy: family.copy,
           opensChoices: family.effects.openChoices ?? [],
-          flags: { [`surprise:${family.id}:at`]: state.worldTime },
+          flags: { ...family.effects.flags, [`surprise:${family.id}:at`]: state.worldTime },
         },
         actorCharacterId: null, causedByEventIds: [parentEventId], visibility: 'world',
       };
@@ -440,15 +600,19 @@ export class Engine {
   ): Promise<CommandResult> {
     if (!this.store.users.has(input.actorUserId)) throw err.unauthenticated();
 
-    const existing = this.store.commands.get(input.commandId);
-    if (existing) {
-      if (existing.requestHash !== hash || existing.worldId !== input.worldId) throw err.idempotencyMismatch();
-      if (!existing.result) throw err.notFound('Command has no stored result');
-      return existing.result;
-    }
-
+    // Replay is a read of stored server state, so it sits behind the same
+    // membership check as the command itself (§1.7: authorisation first). In
+    // front of it, a borrowed commandId would hand one account another
+    // account's CommandResult — and a 409 where everyone else sees 404 would
+    // say which ids exist.
     return this.store.withWorldLock(input.worldId, async () => {
       const world = this.authorizeWrite(input.actorUserId, input.worldId);
+      const existing = this.store.commands.get(input.commandId);
+      if (existing) {
+        if (existing.requestHash !== hash || existing.worldId !== input.worldId) throw err.idempotencyMismatch();
+        if (!existing.result) throw err.notFound('Command has no stored result');
+        return existing.result;
+      }
       if (world.status === 'creating') throw err.precondition('WORLD_NOT_READY', 'World is still being created');
       if (world.status === 'archived') throw err.precondition('WORLD_ARCHIVED', 'Archived worlds are terminal in v1');
       if (world.status === 'paused' && (commandType === 'choice.select' || commandType === 'surprise.request')) {
@@ -544,14 +708,18 @@ export class Engine {
   }
 
   // --- effect compilation -------------------------------------------------
-  private buildEffectEvents(state: WorldState, effects: Effect, ruleId: string, worldId: ID, actorIdentityId: ID): { events: StagedEvent[]; newFacts: FactRow[] } {
-    void actorIdentityId;
+  /** `ids` is injectable so a read-only guard can compile a hypothetical move
+   *  without drawing from the deterministic id sequence. */
+  private buildEffectEvents(
+    state: WorldState, effects: Effect, ruleId: string, worldId: ID,
+    ids: (prefix: string) => ID = this.ids,
+  ): { events: StagedEvent[]; newFacts: FactRow[] } {
     const working = structuredClone(state);
     const player = this.playerCharacter(worldId)!;
     const alias = (ref: 'player' | ID): ID => (ref === 'player' ? player : this.resolveCharacter(worldId, ref));
     const out: StagedEvent[] = [];
     const newFacts: FactRow[] = [];
-    const primary = this.ids('evt');
+    const primary = ids('evt');
 
     out.push({
       eventId: primary, type: 'choice.resolved',
@@ -565,7 +733,7 @@ export class Engine {
       const after = before + r.delta;
       if (after < 0 && !r.allowsDebt) throw err.precondition('NON_NEGATIVE_RESOURCE', `${r.key} cannot go below zero without a debt mechanism`);
       working.characters[characterId]!.resources[r.key] = after;
-      out.push({ eventId: this.ids('evt'), type: 'resource.changed', payload: { characterId, key: r.key, delta: r.delta, before, after }, actorCharacterId: characterId, causedByEventIds: [primary], visibility: 'owner' });
+      out.push({ eventId: ids('evt'), type: 'resource.changed', payload: { characterId, key: r.key, delta: r.delta, before, after }, actorCharacterId: characterId, causedByEventIds: [primary], visibility: 'owner' });
     }
 
     for (const rel of effects.relationships ?? []) {
@@ -575,7 +743,7 @@ export class Engine {
       const before = working.relationships[key] ?? 0;
       const after = clampRelationship(before + rel.delta);
       working.relationships[key] = after;
-      out.push({ eventId: this.ids('evt'), type: 'relationship.changed', payload: { fromCharacterId: from, toCharacterId: to, dimension: rel.dimension, delta: rel.delta, before, after }, actorCharacterId: from, causedByEventIds: [primary], visibility: 'participants' });
+      out.push({ eventId: ids('evt'), type: 'relationship.changed', payload: { fromCharacterId: from, toCharacterId: to, dimension: rel.dimension, delta: rel.delta, before, after }, actorCharacterId: from, causedByEventIds: [primary], visibility: 'participants' });
     }
 
     for (const arc of effects.arcs ?? []) {
@@ -587,25 +755,25 @@ export class Engine {
       const current = working.arcStatuses[arc.arc];
       if (arc.action === 'progress') {
         if (current !== 'open') continue;
-        out.push({ eventId: this.ids('evt'), type: 'story_arc.progressed', payload: { arcId: arc.arc, ruleId }, actorCharacterId: player, causedByEventIds: [primary], visibility: 'owner' });
+        out.push({ eventId: ids('evt'), type: 'story_arc.progressed', payload: { arcId: arc.arc, ruleId }, actorCharacterId: player, causedByEventIds: [primary], visibility: 'owner' });
       } else if (arc.action === 'open') {
         if (current !== 'locked') continue;
         working.arcStatuses[arc.arc] = 'open';
-        out.push({ eventId: this.ids('evt'), type: 'story_arc.opened', payload: { arcId: arc.arc, ruleId }, actorCharacterId: player, causedByEventIds: [primary], visibility: 'owner' });
+        out.push({ eventId: ids('evt'), type: 'story_arc.opened', payload: { arcId: arc.arc, ruleId }, actorCharacterId: player, causedByEventIds: [primary], visibility: 'owner' });
       } else {
         if (current === 'resolved' || current === 'failed') continue;
         working.arcStatuses[arc.arc] = arc.action === 'resolve' ? 'resolved' : 'failed';
-        out.push({ eventId: this.ids('evt'), type: 'story_arc.closed', payload: { arcId: arc.arc, status: arc.action === 'resolve' ? 'resolved' : 'failed', ruleId }, actorCharacterId: player, causedByEventIds: [primary], visibility: 'owner' });
+        out.push({ eventId: ids('evt'), type: 'story_arc.closed', payload: { arcId: arc.arc, status: arc.action === 'resolve' ? 'resolved' : 'failed', ruleId }, actorCharacterId: player, causedByEventIds: [primary], visibility: 'owner' });
       }
     }
 
     for (const f of effects.createFacts ?? []) {
       if (this.store.facts.has(factKey(worldId, f.factId))) continue;
-      out.push({ eventId: this.ids('evt'), type: 'fact.created', payload: { factId: f.factId, label: f.label, verified: f.verified ?? false }, actorCharacterId: null, causedByEventIds: [primary], visibility: f.visibility });
+      out.push({ eventId: ids('evt'), type: 'fact.created', payload: { factId: f.factId, label: f.label, verified: f.verified ?? false }, actorCharacterId: null, causedByEventIds: [primary], visibility: f.visibility });
       newFacts.push({ worldId, factId: f.factId, label: f.label, verified: f.verified ?? false, visibility: f.visibility, sensitivePhrase: f.sensitivePhrase });
       for (const raw of f.knownBy) {
         const who = alias(raw);
-        out.push({ eventId: this.ids('evt'), type: 'fact.disclosed', payload: { factId: f.factId, characterId: who, via: 'creation' }, actorCharacterId: who, causedByEventIds: [primary], visibility: f.visibility });
+        out.push({ eventId: ids('evt'), type: 'fact.disclosed', payload: { factId: f.factId, characterId: who, via: 'creation' }, actorCharacterId: who, causedByEventIds: [primary], visibility: f.visibility });
         working.factualKnowledge[who] = [...new Set([...(working.factualKnowledge[who] ?? []), f.factId])].sort();
       }
     }
@@ -616,7 +784,7 @@ export class Engine {
       if (known.includes(d.factId)) continue;
       const factRow = this.store.facts.get(factKey(worldId, d.factId));
       if (!factRow) throw err.precondition('UNKNOWN_FACT', 'Disclosure references an unknown fact');
-      out.push({ eventId: this.ids('evt'), type: 'fact.disclosed', payload: { factId: d.factId, characterId: who, via: d.via }, actorCharacterId: who, causedByEventIds: [primary], visibility: factRow.visibility });
+      out.push({ eventId: ids('evt'), type: 'fact.disclosed', payload: { factId: d.factId, characterId: who, via: d.via }, actorCharacterId: who, causedByEventIds: [primary], visibility: factRow.visibility });
       working.factualKnowledge[who] = [...known, d.factId].sort();
     }
 
@@ -690,21 +858,13 @@ export class Engine {
   // --- offered choices ----------------------------------------------------
   private refreshOffersAndQueue(worldId: ID): EpisodeRow {
     const world = this.requireWorld(worldId);
-    const snap = this.store.latestSnapshot(worldId);
-    const offerable = Object.keys(snap.state.flags)
-      .filter((k) => k.startsWith('offerable:'))
-      .map((k) => k.slice('offerable:'.length));
-    const live: ID[] = [];
-    for (const id of offerable) {
-      const rule = findChoice(this.pack, id);
-      if (!rule) continue;
-      if (this.failingPrecondition(snap.state, rule.requires, worldId) !== null) {
-        this.store.offeredChoices.delete(offerKey(worldId, id));
-        continue;
-      }
-      const row: OfferedChoiceRow = { choiceId: id, worldId, boundVersion: world.stateVersion, ruleId: rule.id, copy: rule.copy };
-      this.store.offeredChoices.set(offerKey(worldId, id), row);
-      live.push(id);
+    const choices = this.choicesAt(worldId, world.stateVersion);
+    for (const [key, row] of this.store.offeredChoices) {
+      if (row.worldId === worldId) this.store.offeredChoices.delete(key);
+    }
+    for (const choice of choices) {
+      const row: OfferedChoiceRow = { choiceId: choice.choiceId, worldId, boundVersion: world.stateVersion, ruleId: choice.choiceId, copy: choice.copy };
+      this.store.offeredChoices.set(offerKey(worldId, choice.choiceId), row);
     }
     const through = world.lastEventSequence;
     const from = (this.lastEpisodeThrough(worldId)) + 1;
@@ -746,21 +906,113 @@ export class Engine {
   private dayStart(): number { return Math.floor(this.wallNow / DAY_MS) * DAY_MS; }
   private dayStartIso(): ISOTime { return new Date(this.dayStart()).toISOString(); }
 
-  currentChoices(worldId: ID): { choiceId: ID; label: string; copy: string }[] {
-    const world = this.requireWorld(worldId);
-    const snap = this.store.latestSnapshot(worldId);
-    const out: { choiceId: ID; label: string; copy: string }[] = [];
-    for (const key of Object.keys(snap.state.flags)) {
-      if (!key.startsWith('offerable:')) continue;
+  currentChoices(worldId: ID): IssuedChoice[] {
+    return this.choicesAt(worldId, this.requireWorld(worldId).stateVersion);
+  }
+
+  /** The offers a player held at one committed version, recomputed from that
+   *  version's snapshot. `offeredChoices` only ever mirrors these same flags and
+   *  preconditions (see `refreshOffersAndQueue`), so the row is not needed here —
+   *  and reading the snapshot instead of the live offer table is what lets an
+   *  episode that is still in the queue be narrated against its own version
+   *  after the world has moved on (§10: prose is validated against the version
+   *  it was committed for). */
+  private choicesAt(worldId: ID, version: number): IssuedChoice[] {
+    const snap = this.store.snapshotAt(worldId, version);
+    return this.capOffers(this.eligibleOffers(snap.state, worldId), worldId, snap.lastEventSeq);
+  }
+
+  /** Every choice this world has unlocked and the player can currently pay for —
+   *  which is not the same set as what a scene may show (see `capOffers`). */
+  private eligibleOffers(state: WorldState, worldId: ID): IssuedChoice[] {
+    const out: IssuedChoice[] = [];
+    for (const key of Object.keys(state.flags)) {
+      if (!key.startsWith('offerable:') || state.flags[key] !== true) continue;
       const id = key.slice('offerable:'.length);
       const rule = findChoice(this.pack, id);
       if (!rule) continue;
-      const offer = this.store.offeredChoices.get(offerKey(worldId, id));
-      if (!offer || offer.boundVersion !== world.stateVersion) continue;
-      if (this.failingPrecondition(snap.state, rule.requires, worldId) !== null) continue;
+      if (this.failingPrecondition(state, rule.requires, worldId) !== null) continue;
       out.push({ choiceId: id, label: rule.label, copy: rule.copy });
     }
     return out.sort((a, b) => a.choiceId.localeCompare(b.choiceId));
+  }
+
+  /** FR-04 bounds what a scene shows; the rulepack bounds what a world has
+   *  unlocked. Only the first is what the player may act on, so an over-cap scene
+   *  is trimmed here rather than issued in full (ADR-022). The trim is a view over
+   *  committed state and writes no flags, so replay equivalence and every stored
+   *  world's hash are untouched. */
+  private capOffers(list: IssuedChoice[], worldId: ID, upToSequence: number): IssuedChoice[] {
+    const { max } = this.pack.offerPolicy;
+    if (list.length <= max) return list;
+    const history = this.offerHistory(worldId, upToSequence);
+    const declared = new Map(this.pack.choices.map((c, i) => [c.id, i]));
+    const rank = (id: ID) => ({
+      opened: history.opened.get(id) ?? 0,
+      used: history.used.get(id) ?? 0,
+      declared: declared.get(id) ?? this.pack.choices.length,
+    });
+    const kept = [...list].sort((a, b) => {
+      const ra = rank(a.choiceId);
+      const rb = rank(b.choiceId);
+      // What the world just unlocked leads the scene; a move the player just made
+      // trails; otherwise §12's own ordering of the moves decides who is dropped.
+      return rb.opened - ra.opened || ra.used - rb.used || ra.declared - rb.declared;
+    }).slice(0, max);
+    return kept.sort((a, b) => a.choiceId.localeCompare(b.choiceId));
+  }
+
+  /** When each choice became offerable and when the player last took it, read off
+   *  the event log instead of off `WorldState.flags`: a flag records that a choice
+   *  can be offered, never when, and an `offerSeq` flag would be canonical state —
+   *  which would break replay for every stored world (contract §3, T19). */
+  private offerHistory(worldId: ID, upToSequence: number): { opened: Map<ID, number>; used: Map<ID, number> } {
+    const opened = new Map<ID, number>();
+    const used = new Map<ID, number>();
+    for (const e of this.store.worldEvents(worldId)) {
+      if (e.sequence > upToSequence) break;
+      const p = e.payload as Record<string, unknown>;
+      for (const id of (p.opensChoices as ID[] | undefined) ?? []) opened.set(id, e.sequence);
+      for (const [k, v] of Object.entries((p.flags as Record<string, unknown> | undefined) ?? {})) {
+        if (k.startsWith('offerable:') && v === true) opened.set(k.slice('offerable:'.length), e.sequence);
+      }
+      if (e.type === 'choice.resolved') used.set(p.ruleId as ID, e.sequence);
+    }
+    return { opened, used };
+  }
+
+  /** The state a staged batch would produce, folded through the reducer. The
+   *  guard below has to predict what `commit` will write, so it reads the same
+   *  authority rather than repeating the effect arithmetic (contract §3). */
+  private project(state: WorldState, staged: StagedEvent[]): WorldState {
+    return staged.reduce((s, e) => applyEvent(s, { ...e, sequence: 0 } as unknown as DomainEvent), structuredClone(state));
+  }
+
+  /** The lower half of FR-04's interval. A move can spend the resource that kept
+   *  the other offers payable, and a one-button scene is not a scene — but §8
+   *  forbids inventing content to fill one, so the engine refuses the draining
+   *  move only when another issued move holds the floor, and never refuses the
+   *  last move the player has. A world can therefore stall at one offer; it can
+   *  never deadlock (ADR-022). */
+  private assertSceneFloor(state: WorldState, worldId: ID, choiceId: ID, issued: IssuedChoice[], staged: StagedEvent[]) {
+    const { min } = this.pack.offerPolicy;
+    if (this.eligibleOffers(this.project(state, staged), worldId).length >= min) return;
+    for (const other of issued) {
+      if (other.choiceId === choiceId) continue;
+      const rule = findChoice(this.pack, other.choiceId);
+      if (!rule) continue;
+      let alt: StagedEvent[];
+      try {
+        // A simulation must not draw ids from the deterministic sequence: an
+        // offer that cannot even compile is not an escape hatch either.
+        alt = this.buildEffectEvents(state, rule.effects, rule.id, worldId, () => 'evt_simulated').events;
+      } catch {
+        continue;
+      }
+      if (this.eligibleOffers(this.project(state, alt), worldId).length >= min) {
+        throw err.precondition('SCENE_CHOICE_FLOOR', 'That move would leave you with nowhere to go. Try another one.');
+      }
+    }
   }
 
   // --- episode materialization -------------------------------------------
@@ -789,16 +1041,23 @@ export class Engine {
 
   private async generateEpisode(row: EpisodeRow) {
     const world = this.requireWorld(row.episode.worldId);
-    const snap = this.store.latestSnapshot(world.id);
+    // Everything the narration is built from — facts, clock, offers — is read at
+    // the version this episode was committed for, not at the live head: the
+    // worker can lag behind several commands (§10).
+    const version = row.episode.worldStateVersion;
+    const snap = this.store.snapshotAt(world.id, version);
     const player = this.playerCharacter(world.id)!;
     const events = this.store.worldEvents(world.id).filter((e) => e.sequence >= row.episode.fromEventSequence && e.sequence <= row.episode.throughEventSequence);
     const eventIds = events.map((e) => e.eventId);
-    const allowedChoiceIds = this.currentChoices(world.id).map((c) => c.choiceId);
+    const allowedChoiceIds = this.choicesAt(world.id, version).map((c) => c.choiceId);
     const authorizedPovFacts = snap.state.factualKnowledge[player] ?? [];
     const secretMarkers = new Map<ID, string>();
     for (const f of this.store.facts.values()) if (f.worldId === world.id) secretMarkers.set(f.factId, f.sensitivePhrase ?? f.label);
 
     const unitCost = 0.004;
+    // Which prompt the process will actually send; a fake provider that names no
+    // version stays attributed to the engine's built-in placeholder.
+    const promptVersion = this.provider.promptVersion ?? 'p1';
     // The spend ledger is the persisted generation_runs table, so a restart
     // cannot hand the user a fresh daily budget (FR-13).
     const spent = await this.spentToday(world.ownerUserId);
@@ -807,15 +1066,16 @@ export class Engine {
 
     // Budget is checked before the provider request (contract 10).
     if (spent + unitCost > this.usdBudgetPerUserPerDay) {
-      this.publishFallback(row, snap.state, eventIds, allowedChoiceIds, world, player, 'budget_exceeded');
-      this.registerRun(world.ownerUserId, world.id, 'narrate', 'none', 0, 0, 0, 'budget_exceeded');
+      this.publishFallback(row, snap.state, events, allowedChoiceIds, world, player, 'budget_exceeded');
+      this.registerRun(world.ownerUserId, world.id, 'narrate', 'none', promptVersion, 0, 0, 0, 'budget_exceeded');
       return;
     }
 
     const req: NarrativeRequest = {
       worldId: world.id, committedVersion: row.episode.worldStateVersion, eventIds, authorizedPovFacts,
       characterProfiles: [...this.store.characters.values()].filter((c) => c.worldId === world.id).map((c) => ({ id: c.id, name: c.name })),
-      allowedChoiceIds, promptVersion: 'p1', tokenBudget: 2000, worldTime: snap.state.worldTime,
+      styleConstraints: this.pack.style ?? DEFAULT_STYLE,
+      allowedChoiceIds, promptVersion, tokenBudget: 2000, worldTime: snap.state.worldTime,
       eventExcerpts: events.map((e) => ({ id: e.eventId, type: e.type })),
     };
 
@@ -826,11 +1086,10 @@ export class Engine {
       } catch {
         response = { failure: 'timeout' as const };
       }
-      this.registerRun(world.ownerUserId, world.id, 'narrate', response.modelId ?? 'unknown', response.inputTokens ?? 0, response.outputTokens ?? 0, unitCost, response.failure ? 'provider_failure' : 'checked');
-
       if (response.failure) {
+        this.registerRun(world.ownerUserId, world.id, 'narrate', response.modelId ?? 'unknown', promptVersion, response.inputTokens ?? 0, response.outputTokens ?? 0, unitCost, 'provider_failure');
         if (attempt === 2) {
-          this.publishFallback(row, snap.state, eventIds, allowedChoiceIds, world, player, 'provider_timeout');
+          this.publishFallback(row, snap.state, events, allowedChoiceIds, world, player, 'provider_timeout');
           return;
         }
         row.status = 'retrying';
@@ -838,14 +1097,36 @@ export class Engine {
       }
 
       const problems = validateNarrative(response, req, secretMarkers);
-      if (problems.length > 0) {
-        this.store.audit.push({ kind: `narrative_rejected:${problems.join(',')}`, worldId: world.id, at: this.nowIso() });
+      // §10 and §15: the provider's own `content_flags` are already covered by
+      // POLICY_BLOCKED above. This screen runs on every answer, including one
+      // from a gateway that says nothing about its own output.
+      const verdict = screenText(response.episode_text ?? '');
+      // §15 asks that prompt-injection isolation be observable. Story text is
+      // allowed to *contain* an instruction — nothing here acts on it — but the
+      // attempt belongs in the operations record so a reviewer can see it.
+      if (containsInjectionAttempt(response.episode_text ?? '')) {
+        this.store.audit.push({ kind: 'narrative_injection_attempt', worldId: world.id, at: this.nowIso() });
+      }
+      const reasons = verdict.blocked ? [...problems, `content_policy:${verdict.matched.join('|')}`] : problems;
+      // The ledger records the validation outcome, not only the call: section 10
+      // asks for validation failures to be tracked, and a rejected attempt is
+      // still one the user paid for.
+      this.registerRun(world.ownerUserId, world.id, 'narrate', response.modelId ?? 'unknown', promptVersion, response.inputTokens ?? 0, response.outputTokens ?? 0, unitCost, reasons.length > 0 ? `rejected:${reasons.join(',')}` : 'checked');
+
+      if (reasons.length > 0) {
+        this.store.audit.push({ kind: `narrative_rejected:${reasons.join(',')}`, worldId: world.id, at: this.nowIso() });
         if (attempt === 2) {
-          this.publishFallback(row, snap.state, eventIds, allowedChoiceIds, world, player, problems[0]!);
+          this.publishFallback(row, snap.state, events, allowedChoiceIds, world, player, reasons[0]!);
           return;
         }
         row.status = 'retrying';
         continue;
+      }
+
+      // A flag publishes: §15 keeps it age-appropriate and bounded, but the
+      // reviewer queue is what turns a flag into a policy decision (§10).
+      if (verdict.flags.length > 0) {
+        this.store.audit.push({ kind: `narrative_flagged:${verdict.matched.join('|')}`, worldId: world.id, at: this.nowIso() });
       }
 
       row.episode = {
@@ -860,19 +1141,25 @@ export class Engine {
     }
   }
 
-  private publishFallback(row: EpisodeRow, state: WorldState, eventIds: ID[], choiceIds: ID[], world: World, player: ID, reason: string) {
+  private publishFallback(row: EpisodeRow, state: WorldState, events: DomainEvent[], choiceIds: ID[], world: World, player: ID, reason: string) {
+    // The names are the ones `characterProfiles` already hands the provider — a
+    // character record the player can see — so the fallback introduces nothing the
+    // narration would not have been given.
+    const names = Object.fromEntries(
+      [...this.store.characters.values()].filter((c) => c.worldId === world.id).map((c) => [c.id, c.name]),
+    );
     row.episode = {
       ...row.episode,
-      content: fallbackText(state, eventIds, choiceIds, world, player),
-      referencedEventIds: eventIds, allowedChoiceIds: choiceIds, validationStatus: 'fallback',
+      content: fallbackText(state, events.map((e) => ({ type: e.type, actorCharacterId: e.actorCharacterId })), names, player),
+      referencedEventIds: events.map((e) => e.eventId), allowedChoiceIds: choiceIds, validationStatus: 'fallback',
     };
     row.status = 'fallback';
     this.store.audit.push({ kind: `narrative_fallback:${reason}`, worldId: world.id, at: this.nowIso() });
   }
 
-  private registerRun(userId: ID, worldId: ID, purpose: string, modelId: string, inputTokens: number, outputTokens: number, costUsd: number, validationStatus: string) {
+  private registerRun(userId: ID, worldId: ID, purpose: string, modelId: string, promptVersion: string, inputTokens: number, outputTokens: number, costUsd: number, validationStatus: string) {
     const id = this.ids('run');
-    this.store.generationRuns.set(id, { id, worldId, purpose, modelId, promptVersion: 'p1', inputTokens, outputTokens, costUsd, validationStatus, createdAt: this.nowIso() });
+    this.store.generationRuns.set(id, { id, worldId, purpose, modelId, promptVersion, inputTokens, outputTokens, costUsd, validationStatus, createdAt: this.nowIso() });
   }
 
   // --- small accessors ----------------------------------------------------
@@ -894,11 +1181,21 @@ export class Engine {
     return w;
   }
 
+  /** The caller's identity row for a world, as the membership recorded it. */
+  private identityOf(userId: ID, worldId: ID): ID {
+    return this.store.memberships.get(membershipKey(worldId, userId))?.identityId ?? '';
+  }
+
+  /** Writes answer the read question first: a world you cannot see is a world
+   *  that is not there. 403 here would be an existence oracle — §14's leakage
+   *  baseline is about status codes as much as about payloads. 403 stays
+   *  reserved for `assertActorIdentity`, which runs inside a world the caller
+   *  demonstrably can see. */
   private authorizeWrite(userId: ID, worldId: ID): World {
     const w = this.requireWorld(worldId);
-    if (w.ownerUserId !== userId) throw err.accessDenied();
+    if (w.ownerUserId !== userId) throw err.notFound();
     const m = this.store.memberships.get(membershipKey(worldId, userId));
-    if (!m || m.status !== 'active') throw err.accessDenied();
+    if (!m || m.status !== 'active') throw err.notFound();
     return w;
   }
 

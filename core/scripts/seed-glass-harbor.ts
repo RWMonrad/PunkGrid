@@ -5,7 +5,7 @@
 //   npm run seed
 
 import { Engine } from '../src/engine.js';
-import { Api } from '../src/api.js';
+import { Api, InMemoryRunner } from '../src/api.js';
 import { GLASS_HARBOR } from '../src/glassHarbor.js';
 import { CompliantProvider } from '../src/providers.js';
 import { membershipKey } from '../src/store.js';
@@ -16,7 +16,7 @@ const WALL_START = Date.parse('2026-10-11T12:00:00.000Z');
 
 async function main() {
   const engine = new Engine(GLASS_HARBOR, new CompliantProvider(), { seed: SEED, now: () => WALL_START });
-  const api = new Api(engine);
+  const api = new Api(new InMemoryRunner(engine));
   const userId = engine.registerUser('user_demo');
 
   const line = (s = '') => process.stdout.write(s + '\n');

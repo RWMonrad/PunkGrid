@@ -8,6 +8,10 @@
 
 SET search_path = punkgrid, public;
 
+-- The BEGIN/ROLLBACK pair is written in the file, not only left to `-1`, so an
+-- invocation without it still cannot leave fixture rows behind.
+BEGIN;
+
 -- --- fixture: two worlds, one owner, one ledger row ------------------------
 INSERT INTO users(id, auth_uid) VALUES ('u_owner', 'auth_owner'), ('u_intruder', 'auth_intruder');
 INSERT INTO identities(id, owner_user_id, persona_schema_version, profile_json)
@@ -245,6 +249,81 @@ BEGIN
     RAISE EXCEPTION 'invariant hole: %.world_id has no foreign key to worlds', r.table_name;
   END LOOP;
   RAISE NOTICE 'ok 17: every world-scoped table (except deletion_audit) cascades from worlds';
+END $$;
+
+-- --- 18. a report case is anchored to one world and one command ------------
+-- FR-11 / US13 (ADR-018). The case names an episode, and the pair (world_id,
+-- episode_id) is checked against the episode's own world: a client cannot file a
+-- report that points at another account's story, and cannot open two cases with
+-- one commandId.
+INSERT INTO moderation_cases(id, command_id, world_id, episode_id, reporter_user_id,
+                             reporter_identity_id, reason, categories, excerpt, created_at)
+  VALUES ('case_ok', 'cmd_report_1', 'w_one', 'ep_pub', 'u_owner', 'idn_owner', 'violence',
+          '{graphic_violence}', 'ep_pub: original prose', now());
+DO $$ BEGIN
+  INSERT INTO moderation_cases(id, command_id, world_id, episode_id, reporter_user_id,
+                               reporter_identity_id, reason, excerpt, created_at)
+    VALUES ('case_cross', 'cmd_report_2', 'w_two', 'ep_pub', 'u_owner', 'idn_owner', 'violence',
+            'ep_pub: original prose', now());
+  RAISE EXCEPTION 'invariant hole: a case against another world''s episode was accepted';
+EXCEPTION WHEN foreign_key_violation THEN RAISE NOTICE 'ok 18a: cross-world episode reference rejected'; END $$;
+DO $$ BEGIN
+  INSERT INTO moderation_cases(id, command_id, world_id, episode_id, reporter_user_id,
+                               reporter_identity_id, reason, excerpt, created_at)
+    VALUES ('case_twice', 'cmd_report_1', 'w_one', 'ep_pub', 'u_owner', 'idn_owner', 'violence',
+            'ep_pub: original prose', now());
+  RAISE EXCEPTION 'invariant hole: one commandId opened two cases';
+EXCEPTION WHEN unique_violation THEN RAISE NOTICE 'ok 18b: a replayed report commandId is one case'; END $$;
+
+-- --- 19. the case file stays a record, not a copy of the story -------------
+-- §15: an operational record carries a reason code and a bounded reference.
+DO $$ BEGIN
+  INSERT INTO moderation_cases(id, command_id, world_id, episode_id, reporter_user_id,
+                               reporter_identity_id, reason, excerpt, created_at)
+    VALUES ('case_long', 'cmd_report_3', 'w_one', 'ep_pub', 'u_owner', 'idn_owner', 'other',
+            repeat('the whole episode, ', 40), now());
+  RAISE EXCEPTION 'invariant hole: a case accepted an unbounded excerpt';
+EXCEPTION WHEN check_violation THEN RAISE NOTICE 'ok 19a: oversized excerpt rejected'; END $$;
+DO $$ BEGIN
+  INSERT INTO moderation_cases(id, command_id, world_id, episode_id, reporter_user_id,
+                               reporter_identity_id, reason, excerpt, status, created_at)
+    VALUES ('case_unstamped', 'cmd_report_4', 'w_one', 'ep_pub', 'u_owner', 'idn_owner', 'other',
+            'ep_pub: original prose', 'actioned', now());
+  RAISE EXCEPTION 'invariant hole: a case was closed without a review stamp';
+EXCEPTION WHEN check_violation THEN RAISE NOTICE 'ok 19b: actioned case without reviewed_at rejected'; END $$;
+
+-- --- 20. RLS and the write path for moderation_cases -----------------------
+DO $$ BEGIN
+  SET LOCAL ROLE punkgrid_app;
+  PERFORM set_config('app.user_id', 'u_intruder', true);
+  IF (SELECT count(*) FROM moderation_cases) <> 0 THEN RAISE EXCEPTION 'invariant hole: RLS exposed a case to a non-member'; END IF;
+  RESET ROLE;
+  RAISE NOTICE 'ok 20a: a non-member reads no cases';
+END $$;
+DO $$ BEGIN
+  SET LOCAL ROLE punkgrid_app;
+  PERFORM set_config('app.user_id', 'u_owner', true);
+  IF (SELECT count(*) FROM moderation_cases) <> 1 THEN RAISE EXCEPTION 'RLS hid the reporter their own case'; END IF;
+  RESET ROLE;
+  RAISE NOTICE 'ok 20b: the member reads the case from their own world';
+END $$;
+DO $$ BEGIN
+  SET LOCAL ROLE punkgrid_app;
+  PERFORM set_config('app.user_id', 'u_owner', true);
+  BEGIN
+    INSERT INTO moderation_cases(id, command_id, world_id, episode_id, reporter_user_id,
+                                 reporter_identity_id, reason, excerpt, created_at)
+      VALUES ('case_app_write', 'cmd_report_9', 'w_one', 'ep_pub', 'u_owner', 'idn_owner', 'other',
+              'ep_pub: original prose', now());
+    RAISE EXCEPTION 'invariant hole: the app role wrote a case row directly';
+  EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok 20c: app role cannot insert cases';
+  END;
+  BEGIN
+    UPDATE moderation_cases SET status = 'dismissed', reviewed_at = now() WHERE id = 'case_ok';
+    RAISE EXCEPTION 'invariant hole: the app role closed a review case';
+  EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok 20d: app role cannot close a case';
+  END;
+  RESET ROLE;
 END $$;
 
 ROLLBACK;

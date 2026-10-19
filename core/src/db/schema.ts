@@ -296,6 +296,36 @@ export interface OperationLogTable {
 // Marker so a GENERATED ... AS IDENTITY default is accepted by Kysely.
 type Timestamp = Date;
 
+/** FR-11 / US13 (ADR-018). `excerpt` is a bounded fragment, never the episode —
+ *  §15 keeps operational records to a reason code and a reference. */
+export interface ModerationCasesTable {
+  id: string;
+  command_id: string;
+  world_id: string;
+  episode_id: string;
+  reporter_user_id: string;
+  reporter_identity_id: string;
+  reason: 'sexual_content' | 'violence' | 'self_harm' | 'real_person' | 'offensive_language' | 'other';
+  categories: string[];
+  excerpt: string;
+  reporter_note: string | null;
+  status: 'open' | 'reviewing' | 'actioned' | 'dismissed';
+  created_at: Generated<Timestamp> & Date;
+  reviewed_at: (Timestamp & Date) | null;
+}
+
+/** F-S6, migration 010. One shared token bucket per limiter key. Operational
+ *  state rather than canon — the NUMERIC columns arrive as strings, which is why
+ *  the take itself happens in SQL (`punkgrid_rate_limit_take`) and nothing here
+ *  reads or writes these rows through Kysely. */
+export interface RateLimitBucketTable {
+  bucket_key: string;
+  capacity: string;
+  refill_per_minute: string;
+  tokens: string;
+  updated_at: Timestamp & Date;
+}
+
 export interface DB {
   users: UsersTable;
   identities: IdentitiesTable;
@@ -320,4 +350,6 @@ export interface DB {
   organization_memberships: OrganizationMembershipsTable;
   deletion_audit: DeletionAuditTable;
   operation_log: OperationLogTable;
+  moderation_cases: ModerationCasesTable;
+  rate_limit_bucket: RateLimitBucketTable;
 }

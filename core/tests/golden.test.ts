@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { GLASS_HARBOR } from '../src/glassHarbor.js';
 import { applyEvent } from '../src/reducer.js';
 import { ChoiceInventingProvider, CompliantProvider, LeakingProvider, PolicyBlockedProvider, ThrowingProvider, TimeoutProvider } from '../src/providers.js';
 import { EngineError } from '../src/errors.js';
+import { defaultSeed, makeIdFactory } from '../src/domain.js';
 import { characterKey, membershipKey, snapshotKey } from '../src/store.js';
 import { T0, arc, choose, cid, eventTypes, freshWorld, knownFacts, makeEngine, resource, snap, trust } from './helpers.js';
 
@@ -401,6 +402,184 @@ describe('Golden suite — The Glass Harbor (contract section 13)', () => {
 });
 
 describe('Canonical invariants beyond the twenty scenarios', () => {
+  it.each([0, 4, 5])('gates verify_memo on sufficient cash: initial cash %i', async (initialCash) => {
+    const pack = structuredClone(GLASS_HARBOR);
+    const template = pack.templates[0]!;
+    template.characters.find((c) => c.id === template.playerCharacterId)!.resources.cash = initialCash;
+    const engine = makeEngine(pack);
+    const ctx = await freshWorld(engine);
+    expect(resource(ctx, 'cash')).toBe(initialCash);
+
+    const surprise = await engine.requestSurprise({ actorUserId: ctx.userId, worldId: ctx.worldId, actorIdentityId: ctx.identityId, expectedWorldVersion: ctx.version, commandId: cid() });
+    expect(surprise.outcome).toBe('committed');
+    const trigger = engine.store.worldEvents(ctx.worldId).find((e) => e.type === 'surprise.triggered')!;
+    expect((trigger.payload as Record<string, unknown>).familyId).toBe('leaked_memo');
+    expect(knownFacts(ctx, 'char_player')).toContain('fact_memo_claim');
+    expect(arc(ctx, 'arc_hidden_link')).toBe('locked');
+    expect(engine.currentChoices(ctx.worldId).some((c) => c.choiceId === 'verify_memo')).toBe(initialCash === 5);
+
+    if (initialCash < 5) {
+      const beforeSnapshot = structuredClone(snap(ctx));
+      const beforeEvents = engine.store.worldEvents(ctx.worldId).length;
+      const beforeCommands = engine.store.commands.size;
+      const e = await expectError(choose(ctx, 'verify_memo', surprise.newVersion), 'RULE_PRECONDITION_FAILED');
+      expect(e.details?.ruleCode).toBe('RESOURCE_PRECONDITION');
+      expect(engine.store.worlds.get(ctx.worldId)!.stateVersion).toBe(surprise.newVersion);
+      expect(engine.store.worldEvents(ctx.worldId).length).toBe(beforeEvents);
+      expect(engine.store.commands.size).toBe(beforeCommands);
+      expect(snap(ctx)).toEqual(beforeSnapshot);
+      expect(resource(ctx, 'cash')).toBe(initialCash);
+    } else {
+      const result = await choose(ctx, 'verify_memo', surprise.newVersion);
+      expect(result.outcome).toBe('committed');
+      expect(result.newVersion).toBe(surprise.newVersion + 1);
+      expect(resource(ctx, 'cash')).toBe(0);
+      expect(arc(ctx, 'arc_hidden_link')).toBe('open');
+    }
+    expect(engine.verifyReplay(ctx.worldId).equal).toBe(true);
+  });
+
+  it('removes disabled offers only in their world and preserves queued historical choices', async () => {
+    const pack = structuredClone(GLASS_HARBOR);
+    const negotiation = pack.choices.find((c) => c.id === 'open_negotiation')!;
+    negotiation.effects.flags = { ...negotiation.effects.flags, 'offerable:confront_mara': false };
+    const provider = new CompliantProvider();
+    const narrate = vi.spyOn(provider, 'narrate');
+    const engine = makeEngine(pack, provider, { autoFlush: false });
+    const ctx = await freshWorld(engine);
+    const other = await freshWorld(engine, 'user_b');
+    const openingIds = engine.currentChoices(ctx.worldId).map((c) => c.choiceId);
+    const otherOffers = structuredClone([...engine.store.offeredChoices.entries()].filter(([, row]) => row.worldId === other.worldId));
+    expect(openingIds).toContain('confront_mara');
+    expect(engine.store.offeredChoices.has(`${ctx.worldId}|confront_mara`)).toBe(true);
+    expect(otherOffers).toHaveLength(openingIds.length);
+
+    const result = await choose(ctx, 'open_negotiation');
+    expect(result.outcome).toBe('committed');
+    expect(snap(ctx).state.flags['offerable:confront_mara']).toBe(false);
+    expect(engine.store.snapshotAt(ctx.worldId, ctx.version).state.flags['offerable:confront_mara']).toBe(true);
+    const current = engine.currentChoices(ctx.worldId);
+    const currentIds = current.map((c) => c.choiceId);
+    expect(currentIds).toEqual(['brief_staff', 'investigate_buyer', 'open_negotiation', 'reject_sale']);
+    expect([...engine.store.offeredChoices.values()]
+      .filter((row) => row.worldId === ctx.worldId)
+      .sort((a, b) => a.choiceId.localeCompare(b.choiceId)))
+      .toEqual(current.map((choice) => ({
+        choiceId: choice.choiceId, worldId: ctx.worldId, boundVersion: result.newVersion,
+        ruleId: choice.choiceId, copy: choice.copy,
+      })));
+    expect([...engine.store.offeredChoices.entries()].filter(([, row]) => row.worldId === other.worldId)).toEqual(otherOffers);
+
+    const beforeSnapshot = structuredClone(snap(ctx));
+    const beforeEvents = engine.store.worldEvents(ctx.worldId).length;
+    const beforeCommands = engine.store.commands.size;
+    const e = await expectError(choose(ctx, 'confront_mara', result.newVersion), 'RULE_PRECONDITION_FAILED');
+    expect(e.details?.ruleCode).toBe('CHOICE_NOT_OFFERED');
+    expect(engine.store.worldEvents(ctx.worldId)).toHaveLength(beforeEvents);
+    expect(engine.store.worlds.get(ctx.worldId)!.stateVersion).toBe(result.newVersion);
+    expect(engine.store.commands.size).toBe(beforeCommands);
+    expect(snap(ctx)).toEqual(beforeSnapshot);
+    expect(engine.verifyReplay(ctx.worldId).equal).toBe(true);
+
+    expect(narrate).not.toHaveBeenCalled();
+    expect([...engine.store.episodes.values()].every((row) => row.status === 'pending')).toBe(true);
+    await engine.flush();
+    expect(narrate).toHaveBeenCalledTimes(3);
+    expect(narrate).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      worldId: ctx.worldId, committedVersion: ctx.version, allowedChoiceIds: openingIds,
+    }));
+    expect(narrate).toHaveBeenNthCalledWith(3, expect.objectContaining({
+      worldId: ctx.worldId, committedVersion: result.newVersion, allowedChoiceIds: currentIds,
+    }));
+    const episodes = [...engine.store.episodes.values()].filter((row) => row.episode.worldId === ctx.worldId);
+    expect(episodes.every((row) => row.status === 'published')).toBe(true);
+    expect(episodes.map((row) => [row.episode.worldStateVersion, row.episode.allowedChoiceIds])).toEqual([
+      [ctx.version, openingIds], [result.newVersion, currentIds],
+    ]);
+  });
+
+  it('preserves surprise flags with engine-owned cooldown and version-bound queued narration', async () => {
+    const pack = structuredClone(GLASS_HARBOR);
+    const family = pack.surprises.find((f) => f.id === 'leaked_memo')!;
+    const cooldownKey = `surprise:${family.id}:at`;
+    family.effects.flags = {
+      ...family.effects.flags, custom_surprise_flag: true, 'offerable:confront_mara': false,
+      [cooldownKey]: '1900-01-01T00:00:00.000Z',
+    };
+    const provider = new CompliantProvider();
+    const narrate = vi.spyOn(provider, 'narrate');
+    const engine = makeEngine(pack, provider, { autoFlush: false });
+    const ctx = await freshWorld(engine);
+    const openingSnapshot = structuredClone(snap(ctx));
+    const openingIds = engine.currentChoices(ctx.worldId).map((c) => c.choiceId);
+    expect(openingIds).toContain('confront_mara');
+    expect(engine.store.offeredChoices.has(`${ctx.worldId}|confront_mara`)).toBe(true);
+
+    const base = { actorUserId: ctx.userId, worldId: ctx.worldId, actorIdentityId: ctx.identityId };
+    const result = await engine.requestSurprise({ ...base, expectedWorldVersion: ctx.version, commandId: cid() });
+    expect(result.outcome).toBe('committed');
+    expect(result.newVersion).toBe(ctx.version + 1);
+    const expectedFlags = {
+      custom_surprise_flag: true, 'offerable:confront_mara': false,
+      [cooldownKey]: openingSnapshot.state.worldTime,
+    };
+    const trigger = engine.store.worldEvents(ctx.worldId).find((e) => e.type === 'surprise.triggered')!;
+    expect((trigger.payload as Record<string, unknown>).flags).toEqual(expectedFlags);
+    expect(snap(ctx).state.flags).toMatchObject(expectedFlags);
+    expect(engine.store.snapshotAt(ctx.worldId, ctx.version)).toEqual(openingSnapshot);
+    const currentIds = engine.currentChoices(ctx.worldId).map((c) => c.choiceId);
+    expect(currentIds).toEqual(['brief_staff', 'investigate_buyer', 'open_negotiation', 'verify_memo']);
+    expect(engine.store.offeredChoices.has(`${ctx.worldId}|confront_mara`)).toBe(false);
+
+    const beforeSnapshot = structuredClone(snap(ctx));
+    const beforeEvents = structuredClone(engine.store.worldEvents(ctx.worldId));
+    const beforeCommands = engine.store.commands.size;
+    const beforeOffers = structuredClone([...engine.store.offeredChoices.entries()]);
+    const beforeOutbox = structuredClone(engine.store.outbox);
+    const e = await expectError(choose(ctx, 'confront_mara', result.newVersion), 'RULE_PRECONDITION_FAILED');
+    expect(e.details?.ruleCode).toBe('CHOICE_NOT_OFFERED');
+    expect(engine.store.worldEvents(ctx.worldId)).toEqual(beforeEvents);
+    expect(engine.store.worlds.get(ctx.worldId)!.stateVersion).toBe(result.newVersion);
+    expect(engine.store.commands.size).toBe(beforeCommands);
+    expect(snap(ctx)).toEqual(beforeSnapshot);
+    expect([...engine.store.offeredChoices.entries()]).toEqual(beforeOffers);
+    expect(engine.store.outbox).toEqual(beforeOutbox);
+
+    const again = await engine.requestSurprise({ ...base, expectedWorldVersion: result.newVersion, commandId: cid() });
+    expect(again).toMatchObject({
+      outcome: 'no_op', noOpReason: 'NO_ELIGIBLE_SURPRISE', eventIds: [],
+      previousVersion: result.newVersion, newVersion: result.newVersion, stateHash: result.stateHash,
+    });
+    expect(engine.store.worldEvents(ctx.worldId)).toEqual(beforeEvents);
+    expect(engine.store.worlds.get(ctx.worldId)!.stateVersion).toBe(result.newVersion);
+    expect(snap(ctx)).toEqual(beforeSnapshot);
+    expect([...engine.store.offeredChoices.entries()]).toEqual(beforeOffers);
+    expect(engine.store.outbox).toEqual(beforeOutbox);
+    expect(engine.verifyReplay(ctx.worldId)).toEqual({
+      equal: true, storedHash: result.stateHash, replayedHash: result.stateHash,
+    });
+
+    expect(narrate).not.toHaveBeenCalled();
+    expect([...engine.store.episodes.values()].every((row) => row.status === 'pending')).toBe(true);
+    await engine.flush();
+    expect(narrate).toHaveBeenCalledTimes(2);
+    expect(narrate).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      worldId: ctx.worldId, committedVersion: ctx.version, allowedChoiceIds: openingIds,
+      authorizedPovFacts: openingSnapshot.state.factualKnowledge.char_player,
+    }));
+    expect(narrate).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      worldId: ctx.worldId, committedVersion: result.newVersion, allowedChoiceIds: currentIds,
+      authorizedPovFacts: beforeSnapshot.state.factualKnowledge.char_player,
+    }));
+    const episodes = [...engine.store.episodes.values()];
+    expect(episodes.every((row) => row.status === 'published')).toBe(true);
+    expect(episodes.map((row) => [row.episode.worldStateVersion, row.episode.allowedChoiceIds])).toEqual([
+      [ctx.version, openingIds], [result.newVersion, currentIds],
+    ]);
+    expect(snap(ctx)).toEqual(beforeSnapshot);
+    expect(engine.verifyReplay(ctx.worldId).equal).toBe(true);
+  });
+
   it('enforces the free-world quota atomically inside world.create (ADR-012)', async () => {
     const engine = makeEngine();
     engine.registerUser('user_a');
@@ -522,6 +701,110 @@ describe('Canonical invariants beyond the twenty scenarios', () => {
     expect(engine.store.worldEvents(ctx.worldId)).toHaveLength(1);
   });
 
+  it('caps a scene at the issued interval and refuses the offer it trimmed away (FR-04, ADR-022)', async () => {
+    const engine = makeEngine();
+    const ctx = await freshWorld(engine);
+
+    const negotiated = await choose(ctx, 'open_negotiation');
+    // Five choices are now unlocked and payable. A scene holds four, so one of
+    // them was never issued — and what was never issued does not exist for the
+    // player, however valid the rule behind it is.
+    const scene = engine.currentChoices(ctx.worldId).map((c) => c.choiceId);
+    expect(scene).toHaveLength(4);
+    expect(scene).toContain('reject_sale');
+    expect(scene).not.toContain('open_negotiation');
+    expect([...engine.store.offeredChoices.values()]
+      .filter((row) => row.worldId === ctx.worldId)
+      .map((row) => row.choiceId).sort()).toEqual([...scene].sort());
+
+    const eventsBefore = engine.store.worldEvents(ctx.worldId).length;
+    const e = await expectError(choose(ctx, 'open_negotiation', negotiated.newVersion), 'RULE_PRECONDITION_FAILED');
+    expect(e.details?.ruleCode).toBe('CHOICE_NOT_OFFERED');
+    expect(engine.store.worlds.get(ctx.worldId)!.stateVersion).toBe(negotiated.newVersion);
+    expect(engine.store.worldEvents(ctx.worldId)).toHaveLength(eventsBefore);
+  });
+
+  it('refuses the move that would drain a scene below its lower bound (FR-04, ADR-022)', async () => {
+    const pack = structuredClone(GLASS_HARBOR);
+    const template = pack.templates[0]!;
+    // Cash and standing gone: the scene is brief_staff, which pays 5 credibility,
+    // and confront_mara, §12's free move.
+    Object.assign(template.characters.find((c) => c.id === template.playerCharacterId)!.resources,
+      { cash: 0, influence: 0, credibility: 10 });
+    const engine = makeEngine(pack);
+    const ctx = await freshWorld(engine);
+    expect(engine.currentChoices(ctx.worldId).map((c) => c.choiceId)).toEqual(['brief_staff', 'confront_mara']);
+
+    let version = await choose(ctx, 'brief_staff', ctx.version).then((r) => r.newVersion);
+    expect(resource(ctx, 'credibility')).toBe(5);
+
+    // At 5 the same move again would leave one offer on screen. confront_mara is
+    // issued and holds the floor, so the draining move is the one refused.
+    const eventsBefore = engine.store.worldEvents(ctx.worldId).length;
+    const before = structuredClone(snap(ctx));
+    const e = await expectError(choose(ctx, 'brief_staff', version), 'RULE_PRECONDITION_FAILED');
+    expect(e.details?.ruleCode).toBe('SCENE_CHOICE_FLOOR');
+    expect(engine.store.worlds.get(ctx.worldId)!.stateVersion).toBe(version);
+    expect(engine.store.worldEvents(ctx.worldId)).toHaveLength(eventsBefore);
+    expect(snap(ctx)).toEqual(before);
+
+    version = await choose(ctx, 'confront_mara', version).then((r) => r.newVersion);
+    expect(resource(ctx, 'credibility')).toBe(7);
+    expect(engine.currentChoices(ctx.worldId).map((c) => c.choiceId)).toEqual(['brief_staff', 'confront_mara']);
+    expect(engine.verifyReplay(ctx.worldId).equal).toBe(true);
+  });
+
+  it('still lets the player take the only move a scene holds (ADR-022: no deadlock)', async () => {
+    const pack = structuredClone(GLASS_HARBOR);
+    const template = pack.templates[0]!;
+    Object.assign(template.characters.find((c) => c.id === template.playerCharacterId)!.resources,
+      { cash: 0, influence: 0, credibility: 5 });
+    template.genesisChoiceIds = ['investigate_buyer', 'open_negotiation', 'brief_staff'];
+    const engine = makeEngine(pack);
+    const ctx = await freshWorld(engine);
+    expect(engine.currentChoices(ctx.worldId).map((c) => c.choiceId)).toEqual(['brief_staff']);
+
+    // One offer, and spending it empties the scene. Refusing it would leave the
+    // player nothing to tap at all, so the engine commits and recovery comes from
+    // the surprise and scheduled channels instead (§8: never invent a choice).
+    const drained = await choose(ctx, 'brief_staff', ctx.version);
+    expect(drained.outcome).toBe('committed');
+    expect(resource(ctx, 'credibility')).toBe(0);
+    expect(engine.currentChoices(ctx.worldId)).toHaveLength(0);
+    expect(engine.verifyReplay(ctx.worldId).equal).toBe(true);
+  });
+
+  it('opens a world on the era and role the player chose (US03, ADR-023)', async () => {
+    const engine = makeEngine();
+    engine.registerUser('user_a');
+
+    const past = await engine.createWorld({
+      actorUserId: 'user_a', mode: 'create', templateId: 'glass-harbor-2034',
+      setting: { era: '1888', location: 'copenhagen', role: 'investigator', flags: [] },
+      commandId: cid(),
+    });
+    const pastSnap = engine.store.snapshotAt(past.worldId, 1);
+    expect(pastSnap.state.worldTime).toBe('1888-09-15T09:00:00.000Z');
+    expect(pastSnap.state.characters.char_player?.roleIds).toEqual(['investigator']);
+    expect(engine.store.characters.get(characterKey(past.worldId, 'char_player'))!.profile.title).toBe('Investigator, Helix Transit');
+    // Location has no field in canonical WorldState (contract §6), so a validated
+    // place stays in the blueprint and reaches the player through the narrator.
+    expect(engine.store.blueprints.get(past.worldId)!.setting.location).toBe('copenhagen');
+    expect(engine.verifyReplay(past.worldId).equal).toBe(true);
+
+    // §12's reference setting still opens the reference world, unchanged.
+    engine.registerUser('user_ref');
+    const now = await engine.createWorld({
+      actorUserId: 'user_ref', mode: 'create', templateId: 'glass-harbor-2034',
+      setting: { era: '2034', location: 'singapore', role: 'founder-ceo', genre: 'speculative-corporate-mystery' },
+      commandId: cid(),
+    });
+    const nowSnap = engine.store.snapshotAt(now.worldId, 1);
+    expect(nowSnap.state.worldTime).toBe('2034-09-15T09:00:00.000Z');
+    expect(nowSnap.state.characters.char_player?.roleIds).toEqual(['founder_ceo']);
+    expect(engine.store.characters.get(characterKey(now.worldId, 'char_player'))!.profile.title).toBe('Founder/CEO, Helix Transit');
+  });
+
   it('advances world version once per command batch, not per event', async () => {
     const engine = makeEngine();
     const ctx = await freshWorld(engine);
@@ -551,5 +834,43 @@ describe('Canonical invariants beyond the twenty scenarios', () => {
     expect(r.outcome).toBe('no_op'); // 2h is below one 6h tick
     expect(engine.store.worlds.get(ctx.worldId)!.worldTime).toBe('2034-09-15T09:00:00.000Z');
     expect(new Date(engine.nowIso()).getTime()).toBe(T0 + 120 * 60_000);
+  });
+});
+
+describe('Id space separation', () => {
+  // Every id `makeIdFactory` mints is a pure function of the seed, so two
+  // processes that share a seed mint the same world ids. That is the whole
+  // mechanism behind the 500 measured on `POST /v1/worlds` in the deployed
+  // shape: `core/scripts/serve.ts` used to default its seed to `Date.now()`,
+  // and two servers started in the same millisecond started one id space each,
+  // with identical contents. `defaultSeed()` has to be a draw, not a clock.
+  it('draws a seed no other process is about to draw', () => {
+    const draws = Array.from({ length: 200 }, () => defaultSeed());
+    expect(new Set(draws).size).toBe(200);
+    for (const d of draws) {
+      expect(Number.isInteger(d)).toBe(true);
+      expect(d).toBeGreaterThanOrEqual(0);
+      expect(d).toBeLessThan(2 ** 32);
+    }
+    // `Date.now() % 2**32` — the value this replaced — only ever increases while
+    // it is below the modulus. Back-to-back draws must not be an increasing run.
+    expect(draws.every((d, i) => i === 0 || d > draws[i - 1]!)).toBe(false);
+  });
+
+  it('keeps two factories apart when their seeds differ', () => {
+    const mint = (seed: number) => {
+      const next = makeIdFactory(seed);
+      return Array.from({ length: 64 }, (_, i) => next(`world${i}`));
+    };
+    const [a, b] = [mint(20261012), mint(20261013)];
+    expect(a.filter((id) => b.includes(id))).toEqual([]);
+  });
+
+  it('is still fully determined by a seed when one is given', () => {
+    // The deterministic path must survive: replaying a recorded run needs the
+    // same ids, which is why the default had to change rather than the design.
+    const once = Array.from({ length: 16 }, () => makeIdFactory(20261012)('world'));
+    const twice = Array.from({ length: 16 }, () => makeIdFactory(20261012)('world'));
+    expect(once).toEqual(twice);
   });
 });

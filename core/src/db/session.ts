@@ -68,6 +68,18 @@ export class Sessions {
     return fn(this.build(store, null));
   }
 
+  /** The worker's unit of work. It has no request actor, so the world's owner is
+   *  read from the hydrated row and every budget or audit decision is attributed
+   *  to that owner rather than to an identity the process invented. */
+  async forWorld<T>(worldId: ID, fn: (engine: Engine, store: Store) => Promise<T>): Promise<T> {
+    return this.pg.unit({ worldIds: [worldId] }, async (store, tx) => {
+      const engine = this.build(store, tx);
+      const result = await fn(engine, store);
+      await tx.save(store, [worldId], engine.nowIso());
+      return result;
+    });
+  }
+
   private build(store: Store, tx: Tx | null): Engine {
     const pg = this.pg;
     const ports: EnginePorts = {

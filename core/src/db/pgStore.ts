@@ -17,8 +17,8 @@ import {
 } from '../domain.js';
 import { err } from '../errors.js';
 import {
-  Store, characterKey, factKey, membershipKey, snapshotKey,
-  type CommandRow, type EpisodeRow, type FactRow, type ScheduledEventRow, type SnapshotRow,
+  Store, characterKey, factKey, arcKey, membershipKey, snapshotKey,
+  type CommandRow, type EpisodeRow, type FactRow, type ModerationReason, type ScheduledEventRow, type SnapshotRow,
 } from '../store.js';
 
 export interface LoadScope {
@@ -63,7 +63,16 @@ export class PgStore {
       await client.query('COMMIT');
       return result;
     } catch (e) {
-      await client.query('ROLLBACK');
+      // A connection that is already gone makes ROLLBACK reject, and that rejection
+      // would replace the fault the caller has to see — which is how the 2026-10-12
+      // 500s ended up with no surviving cause in the log. The rollback is best
+      // effort; the original error is not. `release()` is left without an argument
+      // on purpose: an `EngineError` from `fn` is not a broken connection.
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        /* keep the fault that opened this branch */
+      }
       throw e;
     } finally {
       client.release();
@@ -128,14 +137,19 @@ export class PgStore {
       store.users.set(w.owner_user_id, store.users.get(w.owner_user_id) ?? { id: w.owner_user_id, createdAt: w.created_at.toISOString() });
     }
 
+    // Memberships scope by every world the store knows about, not only the
+    // explicitly requested ones: `GET /v1/worlds` arrives with no world ids but
+    // its rows still have to carry the caller's own `identityId`, which is the
+    // value §11 mutations name as `actorIdentityId`.
+    const membershipScope = [...new Set([...loadedWorldIds, ...worldIds])];
+    const memberships = await q<MembershipRow>(`select * from punkgrid.world_memberships where world_id = any($1)`, [membershipScope]);
+    for (const m of memberships) store.memberships.set(membershipKey(m.world_id, m.user_id), { worldId: m.world_id, userId: m.user_id, identityId: m.identity_id, role: m.role, status: m.status as 'active' });
+
     const detail = all ? loadedWorldIds : worldIds;
     if (detail.length === 0) {
       this.finishOutbox(store, []);
       return store;
     }
-
-    const memberships = await q<MembershipRow>(`select * from punkgrid.world_memberships where world_id = any($1)`, [detail]);
-    for (const m of memberships) store.memberships.set(membershipKey(m.world_id, m.user_id), { worldId: m.world_id, userId: m.user_id, identityId: m.identity_id, role: m.role, status: m.status as 'active' });
 
     const blueprints = await q<BlueprintRow>(`select * from punkgrid.world_blueprints where world_id = any($1)`, [detail]);
     for (const b of blueprints) {
@@ -151,7 +165,7 @@ export class PgStore {
     }
 
     const arcs = await q<ArcRowTs>(`select * from punkgrid.story_arcs where world_id = any($1)`, [detail]);
-    for (const a of arcs) store.arcs.set(a.id, { id: a.id, worldId: a.world_id, arcType: a.arc_type, status: a.status });
+    for (const a of arcs) store.arcs.set(arcKey(a.world_id, a.id), { id: a.id, worldId: a.world_id, arcType: a.arc_type, status: a.status });
 
     const offers = await q<OfferRowTs>(`select * from punkgrid.offered_choices where world_id = any($1)`, [detail]);
     for (const o of offers) store.offeredChoices.set(`${o.world_id}|${o.choice_id}`, { choiceId: o.choice_id, worldId: o.world_id, boundVersion: Number(o.bound_version), ruleId: o.rule_id, copy: o.copy });
@@ -211,8 +225,22 @@ export class PgStore {
       } as ScheduledEventRow);
     }
 
+    const cases = await q<ModerationCaseRowTs>(`select * from punkgrid.moderation_cases where world_id = any($1) order by created_at`, [detail]);
+    for (const c of cases) {
+      store.moderationCases.set(c.command_id, {
+        id: c.id, commandId: c.command_id, worldId: c.world_id, episodeId: c.episode_id,
+        reporterUserId: c.reporter_user_id, reporterIdentityId: c.reporter_identity_id,
+        reason: c.reason, categories: c.categories, excerpt: c.excerpt, reporterNote: c.reporter_note,
+        status: c.status, createdAt: c.created_at.toISOString(),
+      });
+    }
+
+    // A worker claims a job before it hydrates the world, so a `claimed` row is
+    // still work this aggregate owes — reading only `pending` made the drain
+    // complete jobs it had never narrated. The advisory lock on the world means
+    // the unit of work holding it is the one that claimed them.
     const jobs = await q<{ world_id: string; episode_id: string | null; command_id: string | null; kind: string }>(
-      `select world_id, episode_id, command_id, kind from punkgrid.outbox_jobs where status = 'pending' and world_id = any($1) order by id`,
+      `select world_id, episode_id, command_id, kind from punkgrid.outbox_jobs where status in ('pending','claimed') and world_id = any($1) order by id`,
       [detail],
     );
     this.finishOutbox(store, jobs);
@@ -280,15 +308,25 @@ export class PgStore {
   private async saveWorld(store: Store, world: World, recorded: Date, client: PgPool | PoolClient) {
     const id = world.id;
 
-    await client.query(
+    // The world row is this store's claim on the id, so the write has to say whose
+    // claim it is: `do update` without a guard let a second process that minted the
+    // same id (two servers sharing a seed — `defaultSeed` in domain.ts) rewrite the
+    // first world's head row and then 500 on the membership key. With the owner in
+    // the `where`, a foreign claim updates zero rows and the transaction aborts
+    // before anything else is written.
+    const head = await client.query(
       `insert into punkgrid.worlds (id, owner_user_id, mode, visibility, status, rulepack_id, rulepack_version, blueprint_version, world_time, version, last_event_seq, created_at)
        values ($1,$2,'personal','private',$3,$4,$5,$6,$7,$8,$9,$10)
        on conflict (id) do update set
          status = excluded.status, world_time = excluded.world_time,
-         version = excluded.version, last_event_seq = excluded.last_event_seq`,
+         version = excluded.version, last_event_seq = excluded.last_event_seq
+       where worlds.owner_user_id = excluded.owner_user_id`,
       [id, world.ownerUserId, world.status, world.rulepackId, world.rulepackVersion, world.blueprintVersion,
         new Date(world.worldTime), world.stateVersion, world.lastEventSequence, new Date(world.createdAt)],
     );
+    if (head.rowCount === 0) {
+      throw new Error(`world ${id} is already claimed by another owner — two processes minted the same id`);
+    }
 
     const membership = [...store.memberships.values()].find((m) => m.worldId === id);
     if (membership) {
@@ -372,7 +410,7 @@ export class PgStore {
       await client.query(
         `insert into punkgrid.story_arcs (id, world_id, arc_type, status, resolved_by_event_id)
          values ($1,$2,$3,$4,$5)
-         on conflict (id) do update set status = excluded.status, resolved_by_event_id = excluded.resolved_by_event_id`,
+         on conflict (world_id, id) do update set status = excluded.status, resolved_by_event_id = excluded.resolved_by_event_id`,
         [a.id, id, a.arcType, a.status, resolver ?? null],
       );
     }
@@ -442,6 +480,19 @@ export class PgStore {
 
     for (const row of [...store.episodes.values()].filter((e) => e.episode.worldId === id)) {
       await this.saveEpisode(row, recorded, client);
+    }
+
+    // A moderation case is an operations record rather than canonical state, so
+    // it is inserted once and never updated here: reviewing a case is the
+    // reviewer service's transaction (009_moderation.sql).
+    for (const c of [...store.moderationCases.values()].filter((c) => c.worldId === id)) {
+      await client.query(
+        `insert into punkgrid.moderation_cases
+           (id, command_id, world_id, episode_id, reporter_user_id, reporter_identity_id, reason, categories, excerpt, reporter_note, status, created_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) on conflict (command_id) do nothing`,
+        [c.id, c.commandId, id, c.episodeId, c.reporterUserId, c.reporterIdentityId, c.reason,
+          c.categories, c.excerpt, c.reporterNote, c.status, new Date(c.createdAt)],
+      );
     }
 
     await this.syncOutbox(store, id, client);
@@ -545,13 +596,16 @@ export class PgStore {
     return at ? at.getTime() : null;
   }
 
+  /** Take the next job that no live worker holds. A `claimed` row whose lease has
+   *  passed belongs to a worker that died mid-narration: `attempts` still bounds
+   *  the recovery, so a crash cannot strand an episode in `pending` forever. */
   async claimJob(): Promise<{ id: string; worldId: ID; episodeId: ID; kind: string } | null> {
     const { rows } = await this.pool.query<{ id: string; world_id: string; episode_id: string | null; kind: string }>(
       `update punkgrid.outbox_jobs j
           set status = 'claimed', attempts = j.attempts + 1, lease_until = now() + interval '60 seconds'
         from (
           select id from punkgrid.outbox_jobs
-           where status = 'pending' and (lease_until is null or lease_until < now()) and attempts < max_attempts
+           where status in ('pending','claimed') and (lease_until is null or lease_until < now()) and attempts < max_attempts
            order by id limit 1 for update skip locked
         ) s
         where j.id = s.id
@@ -562,11 +616,34 @@ export class PgStore {
     return { id: r.id, worldId: r.world_id, episodeId: r.episode_id, kind: r.kind };
   }
 
-  async finishJob(id: string, ok: boolean): Promise<void> {
-    await this.pool.query(
-      `update punkgrid.outbox_jobs set status = $2, lease_until = null where id = $1`,
-      [id, ok ? 'completed' : 'failed'],
+  /** Close a claimed job. Claiming already incremented `attempts`, so the row
+   *  itself decides whether a `retry` still has budget or becomes `failed`.
+   *  ADR-013: when a job is exhausted, fall back the episode so the player
+   *  never sees a stuck `pending` screen. */
+  async finishJob(id: string, outcome: 'completed' | 'retry' | 'failed'): Promise<void> {
+    const result = await this.pool.query<{ status: string; episode_id: string | null }>(
+      `update punkgrid.outbox_jobs
+          set status = case $2
+                when 'completed' then 'completed'
+                when 'retry' then case when attempts < max_attempts then 'pending' else 'failed' end
+                else 'failed' end,
+              lease_until = null
+        where id = $1
+        returning status, episode_id`,
+      [id, outcome],
     );
+    const row = result.rows[0];
+    // ADR-013: if the job became 'failed' and has an episode, publish fallback
+    if (row && row.status === 'failed' && row.episode_id) {
+      await this.pool.query(
+        `update punkgrid.narrative_episodes
+            set status = 'fallback',
+                quality_status = 'fallback',
+                narrative_text = 'The record stalls here. The next offer comes from memory.'
+          where id = $1 and status not in ('published','fallback')`,
+        [row.episode_id],
+      );
+    }
   }
 }
 
@@ -584,6 +661,7 @@ type CommandRowTs = { command_id: string; world_id: string; request_hash: string
 type EpisodeRowTs = { id: string; world_id: string; from_seq: string; through_seq: string; world_version: string; narrative_text: string; referenced_event_ids: string[]; allowed_choice_ids: string[]; status: EpisodeRow['status']; quality_status: 'passed' | 'rejected' | 'fallback'; created_at: Date };
 type RunRowTs = { id: string; world_id: string; purpose: string; model_id: string; prompt_version: string; input_tokens: number; output_tokens: number; cost_usd: string; validation_status: string; created_at: Date };
 type ScheduledRowTs = { id: string; world_id: string; due_world_time: Date; event_family: string; rulepack_version: string; idempotency_key: string; status: ScheduledEventRow['status']; attempts: number; max_attempts: number };
+type ModerationCaseRowTs = { id: string; command_id: string; world_id: string; episode_id: string; reporter_user_id: string; reporter_identity_id: string; reason: ModerationReason; categories: string[]; excerpt: string; reporter_note: string | null; status: 'open' | 'reviewing' | 'actioned' | 'dismissed'; created_at: Date };
 
 function evtFromRow(r: EventRowTs): DomainEvent {
   return {
