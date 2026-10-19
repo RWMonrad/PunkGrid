@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#080a0f]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PunkGrid - Neural Initializer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              cyan: '#00f5d4',
+              magenta: '#f72585',
+              amber: '#ffb703',
+              dark: '#080a0f',
+              surface: '#111319',
+              'surface-low': '#161922',
+              'surface-high': '#1e222d',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.7; transform: scale(1); filter: drop-shadow(0 0 16px rgba(0,245,212,0.45)); }
+      50% { opacity: 1; transform: scale(1.025); filter: drop-shadow(0 0 28px rgba(0,245,212,0.85)); }
+    }
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(1000%); }
+    }
+    @keyframes streamProgress {
+      0% { width: 12%; }
+      40% { width: 56%; }
+      75% { width: 84%; }
+      100% { width: 100%; }
+    }
+    @keyframes matrixFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(1deg); }
+    }
+    @keyframes radarSweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .hud-glow {
+      text-shadow: 0 0 10px rgba(0, 245, 212, 0.6);
+    }
+    .badge-glow {
+      box-shadow: 0 0 14px rgba(0, 245, 212, 0.25);
+    }
+    .anim-pulse-glow {
+      animation: pulseGlow 3s ease-in-out infinite;
+    }
+    .anim-float {
+      animation: matrixFloat 5s ease-in-out infinite;
+    }
+    .progress-bar-fill {
+      animation: streamProgress 3.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    }
+    /* Subtle scanline overlay */
+    .scanlines {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+      background-size: 100% 3px, 6px 100%;
+    }
+  </style>
+</head>
+<body class="h-full w-full bg-[#080a0f] text-slate-100 flex justify-center items-center overflow-hidden font-sans select-none antialiased">
+  
+  <!-- Mobile Screen Frame (390x844 iPhone form factor) -->
+  <div class="relative w-[390px] h-[844px] max-w-full max-h-full overflow-hidden bg-[#080a0f] flex flex-col justify-between border border-cyan-500/20 shadow-2xl shadow-cyan-950/50 rounded-[44px]">
+    
+    <!-- Background Neural Portal Graphic with Vignette & Gradients -->
+    <div class="absolute inset-0 z-0">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1saLSlX3j8UDkvilgTHc_B5RJ1UacqwNv4W4WCTTyTZaey1ceu9rAITj9io8nZsKE5XV-yEY-shNDjLH-xihkoqmCQNRwvqatVCQBK8VdJbuK5klh4apO9dtHlB-U5lv15ikiPlrRHUqVniUOoBDaXyhNsDdTA5LgXttn4uho5q7DWAKg_XWL6euCg7iO-w33h9uNZ5czC7dG_5ZSCzgFpUjb4rmob05GeXGlgnlY_u5YHFpJh9c" alt="PunkGrid Neural Gate" class="w-full h-full object-cover object-center opacity-65 scale-105 filter contrast-125" />
+      
+      <!-- Gradient Overlays for Readability & Depth -->
+      <div class="absolute inset-0 bg-gradient-to-t from-[#080a0f] via-[#080a0f]/45 to-[#080a0f]/90"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-[#080a0f]/90 via-transparent to-[#080a0f]"></div>
+      <div class="absolute inset-0 scanlines pointer-events-none opacity-40"></div>
+    </div>
+
+    <!-- Scanning Laser Line FX -->
+    <div class="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#00f5d4] to-transparent opacity-30 pointer-events-none" style="animation: scanline 8s linear infinite;"></div>
+
+    <!-- ================= TOP HEADER / TELEMETRY STATUS ================= -->
+    <header class="relative z-10 pt-12 px-6 flex items-center justify-between">
+      <!-- Hardware Link Status -->
+      <div class="flex items-center gap-2">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00f5d4] opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-[#00f5d4]"></span>
+        </span>
+        <span class="font-mono text-[10px] tracking-widest text-[#00f5d4] font-semibold uppercase">NEURAL//SYNC ACTIVE</span>
+      </div>
+
+      <!-- Protocol & Hardware Metrics -->
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <p class="font-mono text-[9px] text-slate-400 leading-none">SYS.TICK <span class="text-cyan-300 font-bold">#4,821</span></p>
+          <p class="font-mono text-[8px] text-slate-500 tracking-tighter mt-0.5">LATENCY: 0.42ms</p>
+        </div>
+        <div class="w-6 h-6 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-slate-300">
+          <span class="material-symbols-outlined text-[14px] text-cyan-400">memory</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= CENTER BRANDING & IDENTITY ================= -->
+    <main class="relative z-10 px-6 flex flex-col items-center text-center my-auto">
+      
+      <!-- Floating Holographic Hexagon App Icon -->
+      <div class="relative mb-6 anim-float">
+        <!-- Glow Aura Behind Icon -->
+        <div class="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 via-[#00f5d4]/30 to-fuchsia-500/20 blur-xl rounded-full opacity-70"></div>
+        
+        <!-- Outer Tech Ring with Rotation effect -->
+        <div class="relative w-24 h-24 rounded-3xl bg-[#0c0f17]/90 border-2 border-cyan-400/40 p-1 flex items-center justify-center shadow-xl badge-glow backdrop-blur-md">
+          <!-- Corner Accents -->
+          <span class="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-[#00f5d4]"></span>
+          <span class="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-[#f72585]"></span>
+          
+          <!-- Inner Cyber Glyph -->
+          <div class="w-full h-full rounded-2xl bg-gradient-to-br from-[#121824] to-[#090b10] flex items-center justify-center relative overflow-hidden border border-cyan-500/20">
+            <!-- Grid lines inside icon -->
+            <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#00f5d4 1px, transparent 1px); background-size: 8px 8px;"></div>
+            
+            <svg class="w-12 h-12 text-[#00f5d4] anim-pulse-glow" viewBox="0 0 48 48" fill="none" stroke="currentColor">
+              <!-- Hexagonal Core Matrix -->
+              <polygon points="24,4 42,14 42,34 24,44 6,34 6,14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polygon points="24,12 34,18 34,30 24,36 14,30 14,18" stroke="#f72585" stroke-width="1.8" opacity="0.8"/>
+              <circle cx="24" cy="24" r="4" fill="#00f5d4" />
+              <!-- Radiating node bridges -->
+              <line x1="24" y1="4" x2="24" y2="12" stroke="currentColor" stroke-width="2"/>
+              <line x1="24" y1="36" x2="24" y2="44" stroke="currentColor" stroke-width="2"/>
+              <line x1="6" y1="14" x2="14" y2="18" stroke="currentColor" stroke-width="2"/>
+              <line x1="34" y1="30" x2="42" y2="34" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Brand Wordmark & Cyber Typography -->
+      <div class="space-y-1">
+        <h1 class="text-4xl font-extrabold tracking-tight text-white flex items-center justify-center gap-1.5">
+          <span class="tracking-[0.18em] text-white drop-shadow-[0_2px_12px_rgba(255,255,255,0.2)]">PUNK</span>
+          <span class="tracking-[0.18em] text-[#00f5d4] hud-glow">GRID</span>
+        </h1>
+        <p class="font-mono text-[10px] tracking-[0.28em] text-[#00f5d4]/90 font-medium uppercase pt-1">
+          PROCEDURAL MULTIVERSE SIMULATOR
+        </p>
+      </div>
+
+      <!-- Core Vision Statement / Slogan -->
+      <div class="mt-5 px-4 py-2.5 rounded-full bg-white/[0.04] border border-white/10 backdrop-blur-sm max-w-[320px]">
+        <p class="text-[12px] font-medium text-slate-200 tracking-wide">
+          <span class="text-[#00f5d4] font-semibold">Live a thousand lives.</span> Every choice matters.
+        </p>
+      </div>
+
+      <!-- Quick Feature Pill Badges -->
+      <div class="mt-6 flex items-center justify-center gap-2 flex-wrap max-w-[320px]">
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#111319]/80 border border-cyan-500/30 text-[10px] font-mono text-cyan-300">
+          <span class="material-symbols-outlined text-[12px] text-[#00f5d4]">hub</span>
+          <span>4 Active Timelines</span>
+        </div>
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#111319]/80 border border-fuchsia-500/30 text-[10px] font-mono text-fuchsia-300">
+          <span class="material-symbols-outlined text-[12px] text-[#f72585]">psychology</span>
+          <span>Persistent Neural Memory</span>
+        </div>
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#111319]/80 border border-amber-500/30 text-[10px] font-mono text-amber-300">
+          <span class="material-symbols-outlined text-[12px] text-[#ffb703]">autorenew</span>
+          <span>Idle Background Ticks</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================= BOTTOM INITIALIZATION & CTA ================= -->
+    <footer class="relative z-10 px-6 pb-12 flex flex-col gap-5">
+      
+      <!-- Interactive Progress Stream Box -->
+      <div class="p-3.5 rounded-2xl bg-[#0e111a]/85 border border-cyan-500/25 backdrop-blur-md shadow-lg">
+        <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+          <span class="text-slate-400 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#00f5d4] animate-ping"></span>
+            INITIALIZING QUANTUM ENGINES...
+          </span>
+          <span class="text-[#00f5d4] font-bold">84%</span>
+        </div>
+
+        <!-- Animated Cyber Progress Bar -->
+        <div class="w-full h-1.5 bg-black/60 rounded-full overflow-hidden p-0.5 border border-white/5 relative">
+          <div class="progress-bar-fill h-full bg-gradient-to-r from-cyan-400 via-[#00f5d4] to-[#f72585] rounded-full shadow-[0_0_8px_#00f5d4]"></div>
+        </div>
+
+        <!-- Terminal Log Messages -->
+        <div class="mt-2.5 flex items-center justify-between text-[9px] font-mono text-slate-500 border-t border-white/5 pt-2">
+          <span class="truncate pr-2">» MOUNTING RECURSIVE CAUSAL NODES</span>
+          <span class="text-cyan-400/80 shrink-0">STABLE</span>
+        </div>
+      </div>
+
+      <!-- Action Button / Tap To Enter Matrix -->
+      <button class="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-[#00f5d4] via-[#00e1c3] to-[#00f5d4] p-[1px] shadow-[0_0_24px_rgba(0,245,212,0.35)] transition-all duration-300 hover:shadow-[0_0_36px_rgba(0,245,212,0.6)] active:scale-[0.98]">
+        <div class="w-full py-3.5 px-5 rounded-[11px] bg-gradient-to-r from-[#00f5d4] to-[#00d2b5] flex items-center justify-center gap-2 text-[#080a0f] font-extrabold text-[13px] tracking-wider uppercase">
+          <span class="material-symbols-outlined text-[18px]">bolt</span>
+          <span>JACK INTO THE MULTIVERSE</span>
+          <span class="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-1">arrow_forward</span>
+        </div>
+      </button>
+
+      <!-- Bottom Disclaimer / Version Meta -->
+      <div class="flex items-center justify-between text-[9px] font-mono text-slate-500 px-1">
+        <span>VER 2.4.0-RIPPLE</span>
+        <span>SECURITY ENCLAVE OK</span>
+        <span>© 2098 PUNKGRID CORP</span>
+      </div>
+
+    </footer>
+
+  </div>
+
+</body>
+</html>

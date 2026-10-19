@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#111319;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "outline": "#83948f", "surface-container-low": "#191b21", "on-tertiary": "#422c00", "on-surface-variant": "#b9cac4", "background": "#111319", "on-error": "#690005", "inverse-on-surface": "#2e3036", "on-primary-fixed-variant": "#005144", "on-secondary-fixed-variant": "#8e0048", "surface": "#111319", "inverse-primary": "#006b5b", "primary-fixed": "#26fedc", "secondary": "#ffb1c6", "secondary-fixed": "#ffd9e1", "on-tertiary-fixed-variant": "#5e4100", "secondary-container": "#e20476", "on-tertiary-fixed": "#271900", "on-secondary-fixed": "#3f001c", "on-secondary": "#650031", "surface-bright": "#37393f", "error": "#ffb4ab", "primary-fixed-dim": "#00dfc1", "primary": "#d7fff3", "surface-container-high": "#282a30", "inverse-surface": "#e2e2e9", "on-surface": "#e2e2e9", "on-tertiary-container": "#7e5800", "on-primary-fixed": "#00201a", "surface-container-lowest": "#0c0e13", "on-error-container": "#ffdad6", "secondary-fixed-dim": "#ffb1c6", "outline-variant": "#3a4a46", "surface-container": "#1e1f25", "tertiary-fixed-dim": "#ffba27", "surface-dim": "#111319", "on-primary": "#00382f", "error-container": "#93000a", "on-background": "#e2e2e9", "surface-container-highest": "#33353a", "on-primary-container": "#006c5c", "tertiary-fixed": "#ffdea9", "tertiary-container": "#ffd48b", "tertiary": "#fff5eb", "primary-container": "#00f5d4", "surface-tint": "#00dfc1", "on-secondary-container": "#fffbff", "surface-variant": "#33353a" }, borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, spacing: { "margin-md": "1.5rem", "space-sm": "0.5rem", "gutter": "0.75rem", "space-lg": "1.25rem", "space-xs": "0.25rem", "margin-lg": "2rem", "space-xl": "2rem", "space-md": "0.75rem", "margin": "1rem", "gutter-md": "1rem", "gutter-lg": "1.5rem" }, fontFamily: { "telemetry-lg": ["JetBrains Mono"], "headline-lg": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "title-sm": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "telemetry-sm": ["JetBrains Mono"], "headline-xl": ["Plus Jakarta Sans"], "title-md": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "telemetry-micro": ["JetBrains Mono"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "telemetry-md": ["JetBrains Mono"] }, fontSize: { "telemetry-lg": ["16px", { lineHeight: "20px", letterSpacing: "0.04em", fontWeight: "600" }], "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.015em", fontWeight: "700" }], "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }], "headline-lg-mobile": ["24px", { lineHeight: "30px", letterSpacing: "-0.01em", fontWeight: "700" }], "title-sm": ["15px", { lineHeight: "20px", fontWeight: "600" }], "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }], "telemetry-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.05em", fontWeight: "500" }], "headline-xl": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "800" }], "title-md": ["18px", { lineHeight: "24px", fontWeight: "600" }], "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }], "telemetry-micro": ["9px", { lineHeight: "12px", letterSpacing: "0.08em", fontWeight: "700" }], "headline-xl-mobile": ["28px", { lineHeight: "34px", letterSpacing: "-0.01em", fontWeight: "800" }], "headline-md": ["22px", { lineHeight: "28px", fontWeight: "700" }], "telemetry-md": ["13px", { lineHeight: "16px", letterSpacing: "0.03em", fontWeight: "500" }] } } } }</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface font-body-md text-body-md flex flex-col min-h-screen selection:bg-primary-container selection:text-on-primary-fixed"><header class="fixed top-0 inset-x-0 z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_12px_rgba(0,0,0,0.6)]"><div class="h-16 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><img alt="PunkGrid Emblem" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XwMfEYU8XDm6C4ge7FsrkM5OnaLZwGp8G71RyaNhpOIIjhd_lid9Dc8NF9Z5uuY3HvRuW4D83fjmXtAcCJCovflpxyhDU1kC7ixEmRzNtaHCg3zoPWz9MSuFZm1HxSU25Dklh5z4QJOY1EO-q9sX_kQCWsWmYCbBcyC57jfYx_uXTxv52wSsPHmgqgPLPYQ1wI17v5NTJ7uXhrHQ_vuPOSj0Z5St2GkEO1Qeso3gA7ZpA9shcoLslb"/><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><span class="font-headline-md text-headline-md tracking-wider text-primary font-bold leading-none">PUNKGRID</span><span class="font-telemetry-micro text-telemetry-micro text-outline opacity-60 uppercase tracking-widest hidden sm:inline-block">// CORE-OS</span></div><div class="flex items-center gap-space-xs mt-0.5"><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-container opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-primary-container"></span></span><span class="font-telemetry-micro text-telemetry-micro text-primary-fixed-dim uppercase tracking-wider truncate">SIM ACTIVE: TICK #4,821</span></div></div></div><div class="flex items-center gap-space-xs flex-shrink-0"><div class="hidden xs:flex flex-col items-end mr-1"><span class="font-telemetry-micro text-telemetry-micro text-on-surface-variant uppercase tracking-widest">SYNC: 99.4%</span><span class="font-telemetry-micro text-telemetry-micro text-outline opacity-50">Genesis</span></div><button aria-label="Profile" class="w-11 h-11 flex items-center justify-center p-0.5 rounded-full hover:opacity-80 transition-opacity focus:outline-none" type="button"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzJwGLH338s-xqiHIKGiYzRu7BNxQRKWBt7QWBGuZm-VH0jqqGTrwS9nAUrMGKElqDHj9mbjPhhVJuQhrK6XKB3jdJei9PNEHXyNgCmxqQd7B-uq6lIDVyTZd_kD0NyTRo8YT-aSMARTae97OnN83ezrAJq46_n7_aW3jVl4LC5osLkFhjifKhZy2018MZLIDnjHBqdSkGkR7mXyyPHFb2eDHbVHeIYJH9d-Z1GsQBgRJvNOs8O7k"/></button></div></div></header><main class="flex flex-col relative w-full pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full pb-32">
+<!-- Top Ambient Telemetry Strip -->
+<div class="px-margin pt-space-md pb-space-sm flex items-center justify-between bg-surface-container-lowest/60 backdrop-blur-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-telemetry-micro text-telemetry-micro text-primary-fixed uppercase tracking-wider">GENESIS SEQUENCE // PROTOCOL 0.94-B</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[14px] text-outline">memory</span>
+<span class="font-telemetry-micro text-telemetry-micro text-on-surface-variant font-mono" id="quantum-seed-display">SEED: 0x9F41C</span>
+</div>
+</div>
+<!-- Hero Title Module -->
+<div class="px-margin pt-space-md pb-space-lg">
+<div class="flex items-center justify-between">
+<div>
+<p class="font-telemetry-sm text-telemetry-sm text-primary uppercase tracking-widest font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary-container">psychology_alt</span>
+          PHASE 01 : REINCARNATION MATRIX
+        </p>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-extrabold tracking-tight mt-0.5">
+          PERSONA SYNTHESIZER
+        </h1>
+</div>
+<div class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary-container shadow-inner">
+<span class="material-symbols-outlined text-[22px]">fingerprint</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1.5 leading-snug">
+      Initiate new consciousness thread across procedural dimensions. Calibrate memory imprint and core physics.
+    </p>
+</div>
+<!-- STEP 1: World Archetype Carousel -->
+<section class="flex flex-col gap-space-sm mb-space-xl">
+<div class="px-margin flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-4 h-4 rounded bg-primary-container text-on-primary-fixed flex items-center justify-center font-telemetry-micro text-telemetry-micro font-bold">1</span>
+<h2 class="font-title-sm text-title-sm text-on-surface uppercase tracking-wider font-bold">DIMENSIONAL ARCHETYPE</h2>
+</div>
+<button class="group flex items-center gap-1.5 px-space-sm py-1 rounded-lg bg-surface-container-high hover:bg-surface-bright active:scale-95 transition-all text-primary-container" id="quantum-roll-btn" type="button">
+<span class="material-symbols-outlined text-[16px] transition-transform group-hover:rotate-180">casino</span>
+<span class="font-telemetry-micro text-telemetry-micro font-bold tracking-wider uppercase">QUANTUM ROLL</span>
+</button>
+</div>
+<!-- Horizontal Swipe Deck -->
+<div class="flex gap-space-md overflow-x-auto px-margin no-scrollbar snap-x snap-mandatory pt-1 pb-2">
+<!-- Card 1: Selected -->
+<div class="world-card snap-center shrink-0 w-[275px] rounded-xl bg-surface-container-high p-space-md relative overflow-hidden shadow-xl flex flex-col justify-between cursor-pointer transition-all ring-1 ring-primary-container/30" data-world="kowloon">
+<div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-primary-container/15 via-transparent to-transparent pointer-events-none"></div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded-full bg-primary-container/20 text-primary font-telemetry-micro text-telemetry-micro uppercase tracking-wider font-semibold">SELECTED REALM</span>
+<span class="flex h-2 w-2 relative">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-container opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary-container"></span>
+</span>
+</div>
+<div class="h-32 w-full rounded-lg overflow-hidden relative mt-1 bg-surface-container-lowest">
+<img class="w-full h-full object-cover" data-alt="Cyberpunk megacity Kowloon at midnight, towering neon vertical tenements draped in cables, rain slicked asphalt reflecting holographic advertisements in cyan and hot pink, dense crowds with augmented visors under low atmospheric smog." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAe52nUsOWDfROJz7z3i4RQSfYBrtQiGA9AfMupEz41RCuw-0pcq036NW_dOs6S8gvFjJ0Ui3kUC2gNylmlTmqXtcOnCWwTPvGZD290B_Uy0Im1o0Jl_LrK9qsnV_QQlY9QNMuT0f6dHzIchaxW0hDZCdv0oY9hIJEdaUCDdPzgR5bHDywZq_rKC4a9VaSmGTmwOqP_QPGQDsz02IkT4fjPpWhTBxNvUqQd6B8vHQ36Vn7SBopJ2jg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-high via-transparent to-transparent"></div>
+<div class="absolute bottom-2 left-2 right-2 flex justify-between items-end">
+<span class="font-telemetry-micro text-telemetry-micro px-2 py-0.5 rounded bg-surface/80 backdrop-blur-sm text-primary font-medium tracking-wide">TECH: TIER-5</span>
+<span class="font-telemetry-micro text-telemetry-micro text-on-surface-variant font-mono">14.2M AGENTS</span>
+</div>
+</div>
+<div>
+<div class="font-telemetry-micro text-telemetry-micro text-outline uppercase tracking-widest font-mono">GRID//SECTOR-88</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-extrabold leading-tight tracking-tight">NEO-KOWLOON 2098</h3>
+<p class="font-body-sm text-body-sm text-secondary font-medium tracking-wide mt-0.5">High Tech / Low Life Cyber-Sprawl</p>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between">
+<span class="font-telemetry-micro text-telemetry-micro text-on-surface-variant font-mono">DENSITY: 98.2%</span>
+<span class="font-telemetry-micro text-telemetry-micro text-primary-container font-mono uppercase font-bold">SYNC LOCK: 100%</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="world-card snap-center shrink-0 w-[275px] rounded-xl bg-surface-container p-space-md relative overflow-hidden shadow-md flex flex-col justify-between cursor-pointer opacity-75 hover:opacity-100 transition-all" data-world="solaris">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-telemetry-micro text-telemetry-micro uppercase tracking-wider">AVAILABLE</span>
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+</div>
+<div class="h-32 w-full rounded-lg overflow-hidden relative mt-1 bg-surface-container-lowest">
+<img class="w-full h-full object-cover" data-alt="Massive deep space Dyson ring megastructure orbiting a golden star, sterile pristine white geometric bioclimatic domes, glowing particle conduits, high contrast deep cosmic void background with interstellar dust." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4ZHWbtX3Hilt4NHyctfICkCwl1kUpDrqird41mNKIaMRbCp7SMP3R4iD81nTs3ASkU7PVdS831fAGQe3RRee6B9uaWF68nCWA8-csEWGeZWInRIArBWUICye5av4KHWyI4E297VzUERrGQZC1dMPfCbjFesfaONJVKpNEpp5abmu14EMQ-9emZxEEyeZG7-I7MjI3zU2mO57JBwx6OWFSnw1JCotlhTQIVQScpsLX42p-FTKLNKM"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent"></div>
+<div class="absolute bottom-2 left-2 right-2 flex justify-between items-end">
+<span class="font-telemetry-micro text-telemetry-micro px-2 py-0.5 rounded bg-surface/80 backdrop-blur-sm text-on-surface font-medium tracking-wide">POST-SCARCITY</span>
+<span class="font-telemetry-micro text-telemetry-micro text-on-surface-variant font-mono">4.8M AGENTS</span>
+</div>
+</div>
+<div>
+<div class="font-telemetry-micro text-telemetry-micro text-outline uppercase tracking-widest font-mono">RING//DYSON-04</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-extrabold leading-tight tracking-tight">SOLARIS HABITAT</h3>
+<p class="font-body-sm text-body-sm text-primary-fixed-dim font-medium tracking-wide mt-0.5">Orbital Utopia &amp; Synthetic Ascension</p>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between">
+<span class="font-telemetry-micro text-telemetry-micro text-on-surface-variant font-mono">GRAV: 0.88G</span>
+<span class="font-telemetry-micro text-telemetry-micro text-outline font-mono uppercase">TAP TO ENGAGE</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="world-card snap-center shrink-0 w-[275px] rounded-xl bg-surface-container p-space-md relative overflow-hidden shadow-md flex flex-col justify-between cursor-pointer opacity-75 hover:opacity-100 transition-all" data-world="aetheria">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-telemetry-micro text-telemetry-micro uppercase tracking-wider">AVAILABLE</span>
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim"></span>
+</div>
+<div class="h-32 w-full rounded-lg overflow-hidden relative mt-1 bg-surface-container-lowest">
+<img class="w-full h-full object-cover" data-alt="Victorian London cobblestone streets shrouded in eerie emerald alchemical fog, antique brass streetlamps flickering with mystical fire, dark Gothic clock towers towering above steampunk airships anchored to gargoyles." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB63ZvBia6Hr8652TkYooXJGf6oRMupA8Pj_uetJT-dBFnMZSAFPoPqsxC2_PEi2dbGcOq95R3KJWHCC0O38VNLg_5BZ-Io6xGkTXQgvZZ-_DeVpZhKQLru98WNj1P0BJXXl11ySG5KkkwDqyPRIJFVzQtRQ0GN__6NdmxzVuHOzJt9zzabsVjw6ncl50BWy_16K8O7iKOWTPD2Fxw7TFm0iYpbrtdh7_MPi7giO8Wa2bzzXiH1mKU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container via-transparent to-transparent"></div>
+<div class="absolute bottom-2 left-2 right-2 flex justify-between items-end">
+<span class="font-telemetry-micro text-telemetry-micro px-2 py-0.5 rounded bg-surface/80 backdrop-blur-sm text-tertiary font-medium tracking-wide">ELDRITCH</span>
+<span class="font-telemetry-micro text-telemetry-micro text-on-surface-variant font-mono">890K AGENTS</span>
+</div>
+</div>
+<div>
+<div class="font-telemetry-micro text-telemetry-micro text-outline uppercase tracking-widest font-mono">CHRONO//1888-OCCULT</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-extrabold leading-tight tracking-tight">AETHERIA 1888</h3>
+<p class="font-body-sm text-body-sm text-tertiary font-medium tracking-wide mt-0.5">Victorian Occult &amp; Forbidden Alchemy</p>
+</div>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center justify-between">
+<span class="font-telemetry-micro text-telemetry-micro text-on-surface-variant font-mono">SANITY DRAIN: MID</span>
+<span class="font-telemetry-micro text-telemetry-micro text-outline font-mono uppercase">TAP TO ENGAGE</span>
+</div>
+</div>
+</div>
+</section>
+<!-- STEP 2: Identity Matrix & Background -->
+<section class="px-margin flex flex-col gap-space-lg mb-space-xl">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-4 h-4 rounded bg-primary-container text-on-primary-fixed flex items-center justify-center font-telemetry-micro text-telemetry-micro font-bold">2</span>
+<h2 class="font-title-sm text-title-sm text-on-surface uppercase tracking-wider font-bold">IDENTITY MATRIX &amp; BACKGROUND</h2>
+</div>
+<span class="font-telemetry-micro text-telemetry-micro text-outline font-mono uppercase">ORIGIN SEED</span>
+</div>
+<!-- Origin Archetype Horizontal Chips -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-telemetry-micro text-telemetry-micro text-on-surface-variant uppercase tracking-wider">Social Class / Archetype Lineage</label>
+<div class="flex flex-wrap gap-2" id="archetype-chips">
+<button class="archetype-chip px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm font-semibold transition-all" data-name="Rogue Medic" type="button">
+<span class="material-symbols-outlined text-[15px] align-middle mr-1 text-primary-fixed-dim">medical_services</span>Rogue Medic
+        </button>
+<button class="archetype-chip px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm font-semibold transition-all" data-name="Corpo Exile" type="button">
+<span class="material-symbols-outlined text-[15px] align-middle mr-1 text-secondary">business_center</span>Corpo Exile
+        </button>
+<button class="archetype-chip px-3 py-1.5 rounded-lg bg-primary-container text-on-primary font-bold shadow-md text-body-sm font-body-sm active-chip" data-name="Netrunner Drifter" type="button">
+<span class="material-symbols-outlined text-[15px] align-middle mr-1 text-on-primary">hub</span>Netrunner Drifter
+        </button>
+<button class="archetype-chip px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm font-semibold transition-all" data-name="Street Fixer" type="button">
+<span class="material-symbols-outlined text-[15px] align-middle mr-1 text-tertiary-fixed-dim">handshake</span>Street Fixer
+        </button>
+<button class="archetype-chip px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm font-semibold transition-all" data-name="Synth Architect" type="button">
+<span class="material-symbols-outlined text-[15px] align-middle mr-1 text-primary">precision_manufacturing</span>Synth Architect
+        </button>
+</div>
+</div>
+<!-- Flaw & Perk Matrix Cards -->
+<div class="grid grid-cols-1 gap-space-sm">
+<!-- Latent Perk (Positive Mod) -->
+<div class="p-space-md rounded-xl bg-surface-container-high/70 backdrop-blur-sm relative overflow-hidden flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary-container text-[18px]">verified</span>
+<span class="font-telemetry-micro text-telemetry-micro text-primary-container uppercase font-bold tracking-wider">LATENT PERK (AFFINITY)</span>
+</div>
+<span class="font-telemetry-micro text-telemetry-micro text-primary-fixed-dim font-mono">+15% BUFF</span>
+</div>
+<div class="mt-1">
+<h4 class="font-title-sm text-title-sm text-on-surface font-bold">Photographic Neural Reflex</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 leading-snug">
+            Cranial cortex retains micro-expressions and subnet topologies. +15% rapid cyber-intrusion success and near-instant triage reaction.
+          </p>
+</div>
+<div class="flex items-center gap-2 mt-2 pt-2 bg-surface-container-lowest/40 px-2 py-1.5 rounded-lg">
+<span class="font-telemetry-micro text-telemetry-micro text-outline uppercase font-mono">CATALYST:</span>
+<span class="font-telemetry-micro text-telemetry-micro text-on-surface font-mono">MILSPEC_V3 CORTEX EXPANSION</span>
+</div>
+</div>
+<!-- Fatal Flaw Selector (Interactive Toggle) -->
+<div class="p-space-md rounded-xl bg-surface-container-high/70 backdrop-blur-sm relative overflow-hidden flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">warning</span>
+<span class="font-telemetry-micro text-telemetry-micro text-secondary uppercase font-bold tracking-wider">FATAL FLAW (KARMIC DEBT)</span>
+</div>
+<span class="font-telemetry-micro text-telemetry-micro text-secondary font-mono">SELECT ONE</span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs mt-1" id="flaw-container">
+<!-- Flaw Option 1 -->
+<button class="flaw-card text-left p-2.5 rounded-lg bg-surface-container hover:bg-surface-bright active:scale-[0.98] transition-all flex flex-col justify-between h-full group" data-flaw="gambler" type="button">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="material-symbols-outlined text-secondary text-[16px]">casino</span>
+<span class="w-2 h-2 rounded-full bg-secondary flaw-dot hidden"></span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold leading-tight">Compulsive Gambler</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-tight text-[11px]">Will take perilous 50/50 odds autonomously during high-stakes dialogues.</p>
+</div>
+<span class="font-telemetry-micro text-telemetry-micro text-secondary mt-2 block font-mono">RISK: CHAOTIC</span>
+</button>
+<!-- Flaw Option 2 (Selected by default) -->
+<button class="flaw-card text-left p-2.5 rounded-lg bg-surface-container-highest hover:bg-surface-bright active:scale-[0.98] transition-all flex flex-col justify-between h-full group" data-flaw="bounty" type="button">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="material-symbols-outlined text-secondary-container text-[16px]">target</span>
+<span class="w-2 h-2 rounded-full bg-secondary-container flaw-dot"></span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface font-bold leading-tight">Syndicate Bounty</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-tight text-[11px]">Pursued by ghost extraction units. High ambient threat in upper sectors.</p>
+</div>
+<span class="font-telemetry-micro text-telemetry-micro text-secondary-container mt-2 block font-mono font-bold">ACTIVE DEBT</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- STEP 3: Attribute Allocation -->
+<section class="px-margin flex flex-col gap-space-md mb-space-xl">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-4 h-4 rounded bg-primary-container text-on-primary-fixed flex items-center justify-center font-telemetry-micro text-telemetry-micro font-bold">3</span>
+<h2 class="font-title-sm text-title-sm text-on-surface uppercase tracking-wider font-bold">CONSCIOUSNESS TELEMETRY</h2>
+</div>
+<div class="flex items-center gap-1">
+<span class="font-telemetry-micro text-telemetry-micro text-outline font-mono">POOL:</span>
+<span class="font-telemetry-sm text-telemetry-sm text-primary-container font-mono font-bold" id="stat-pool">24 / 40</span>
+</div>
+</div>
+<!-- Sliders / Tactical Stepper Cards -->
+<div class="rounded-xl bg-surface-container p-space-md flex flex-col gap-space-md shadow-md">
+<!-- Stat 1: Neural Agility -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary-container">speed</span>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Neural Agility</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-telemetry-micro text-telemetry-micro text-primary-container font-mono font-bold">7 / 10</span>
+<span class="font-telemetry-micro text-telemetry-micro text-outline">REFLEX SPEED</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-lowest h-2 rounded-full overflow-hidden flex gap-0.5 p-0.5">
+<div class="h-full bg-primary-container rounded-sm w-[70%] transition-all duration-300"></div>
+<div class="h-full bg-surface-bright rounded-sm w-[30%]"></div>
+</div>
+</div>
+<!-- Stat 2: Organic Resilience -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">favorite</span>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Organic Resilience</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-telemetry-micro text-telemetry-micro text-tertiary-fixed-dim font-mono font-bold">5 / 10</span>
+<span class="font-telemetry-micro text-telemetry-micro text-outline">TOXIN/DAMAGE RESIST</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-lowest h-2 rounded-full overflow-hidden flex gap-0.5 p-0.5">
+<div class="h-full bg-tertiary-fixed-dim rounded-sm w-[50%] transition-all duration-300"></div>
+<div class="h-full bg-surface-bright rounded-sm w-[50%]"></div>
+</div>
+</div>
+<!-- Stat 3: Social Subterfuge -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary-fixed">masks</span>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Social Subterfuge</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-telemetry-micro text-telemetry-micro text-primary-fixed font-mono font-bold">8 / 10</span>
+<span class="font-telemetry-micro text-telemetry-micro text-outline">DECEPTION / PERSUASION</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-lowest h-2 rounded-full overflow-hidden flex gap-0.5 p-0.5">
+<div class="h-full bg-primary-fixed rounded-sm w-[80%] transition-all duration-300"></div>
+<div class="h-full bg-surface-bright rounded-sm w-[20%]"></div>
+</div>
+</div>
+<!-- Stat 4: World Empathy -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">psychology</span>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">World Empathy</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-telemetry-micro text-telemetry-micro text-secondary font-mono font-bold">4 / 10</span>
+<span class="font-telemetry-micro text-telemetry-micro text-outline">AI ALLIANCE BOND</span>
+</div>
+</div>
+<div class="w-full bg-surface-container-lowest h-2 rounded-full overflow-hidden flex gap-0.5 p-0.5">
+<div class="h-full bg-secondary rounded-sm w-[40%] transition-all duration-300"></div>
+<div class="h-full bg-surface-bright rounded-sm w-[60%]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Simulation Rule Engine Telemetry Bar -->
+<section class="px-margin mb-space-xl">
+<div class="p-space-md rounded-xl bg-surface-container-low shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-primary-container">rule_settings</span>
+<span class="font-telemetry-micro text-telemetry-micro text-on-surface uppercase font-bold tracking-wider">SIMULATION LOGIC ENGINE</span>
+</div>
+<span class="font-telemetry-micro text-telemetry-micro text-primary-fixed-dim uppercase font-mono">SYS_OK</span>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-1 text-center">
+<div class="p-2 rounded bg-surface-container-lowest flex flex-col items-center">
+<span class="font-telemetry-micro text-telemetry-micro text-outline uppercase font-mono">PERMADEATH</span>
+<span class="font-telemetry-sm text-telemetry-sm text-on-surface font-mono font-bold mt-0.5">DISABLED</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest flex flex-col items-center">
+<span class="font-telemetry-micro text-telemetry-micro text-outline uppercase font-mono">RIPPLE MEMORY</span>
+<span class="font-telemetry-sm text-telemetry-sm text-primary-container font-mono font-bold mt-0.5">ACTIVE</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest flex flex-col items-center">
+<span class="font-telemetry-micro text-telemetry-micro text-outline uppercase font-mono">AUTO TICKS</span>
+<span class="font-telemetry-sm text-telemetry-sm text-primary-fixed font-mono font-bold mt-0.5">1 SEC/CYCLE</span>
+</div>
+</div>
+<p class="font-telemetry-micro text-telemetry-micro text-on-surface-variant text-center opacity-70 mt-1">
+        Persistent simulation continues in cloud substrate even when client terminal disconnects.
+      </p>
+</div>
+</section>
+<!-- Sticky Bottom Floating Action CTA -->
+<div class="fixed bottom-16 inset-x-0 p-margin bg-gradient-to-t from-surface via-surface/95 to-transparent z-40">
+<button class="w-full group relative overflow-hidden rounded-xl bg-primary-container text-on-primary-fixed p-space-md flex flex-col items-center justify-center shadow-[0_0_24px_rgba(0,245,212,0.35)] active:scale-[0.98] transition-all hover:bg-primary-fixed" id="manifest-btn" type="button">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] font-bold text-on-primary-fixed animate-spin group-hover:animate-none">settings_suggest</span>
+<span class="font-headline-md text-[17px] font-extrabold tracking-wider uppercase text-on-primary-fixed">MANIFEST CONSCIOUSNESS</span>
+<span class="material-symbols-outlined text-[20px] font-bold text-on-primary-fixed transition-transform group-hover:translate-x-1">arrow_forward</span>
+</div>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-on-primary-fixed-variant"></span>
+<span class="font-telemetry-micro text-telemetry-micro text-on-primary-fixed-variant tracking-wider font-mono font-semibold uppercase">
+          ESTIMATED LIFEPATH DIVERGENCE: 8,400+ BRANCHES
+        </span>
+</div>
+</button>
+</div>
+</div>
+<script>
+  (function() {
+    // Interactive World Selection
+    const worldCards = document.querySelectorAll('.world-card');
+    worldCards.forEach(card => {
+      card.addEventListener('click', () => {
+        worldCards.forEach(c => {
+          c.classList.remove('bg-surface-container-high', 'ring-1', 'ring-primary-container/30', 'opacity-100');
+          c.classList.add('bg-surface-container', 'opacity-75');
+          const badge = c.querySelector('.font-telemetry-micro');
+          if (badge && badge.textContent.includes('SELECTED')) {
+            badge.textContent = 'AVAILABLE';
+            badge.className = 'px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-telemetry-micro text-telemetry-micro uppercase tracking-wider';
+          }
+        });
+
+        card.classList.remove('bg-surface-container', 'opacity-75');
+        card.classList.add('bg-surface-container-high', 'ring-1', 'ring-primary-container/30', 'opacity-100');
+        const badge = card.querySelector('.font-telemetry-micro');
+        if (badge) {
+          badge.textContent = 'SELECTED REALM';
+          badge.className = 'px-2 py-0.5 rounded-full bg-primary-container/20 text-primary font-telemetry-micro text-telemetry-micro uppercase tracking-wider font-semibold';
+        }
+      });
+    });
+
+    // Archetype Chip selector
+    const chips = document.querySelectorAll('.archetype-chip');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => {
+          c.className = 'archetype-chip px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm font-semibold transition-all';
+        });
+        chip.className = 'archetype-chip px-3 py-1.5 rounded-lg bg-primary-container text-on-primary font-bold shadow-md text-body-sm font-body-sm active-chip';
+      });
+    });
+
+    // Flaw toggling
+    const flaws = document.querySelectorAll('.flaw-card');
+    flaws.forEach(card => {
+      card.addEventListener('click', () => {
+        flaws.forEach(f => {
+          f.classList.remove('bg-surface-container-highest');
+          f.classList.add('bg-surface-container');
+          const dot = f.querySelector('.flaw-dot');
+          if (dot) dot.classList.add('hidden');
+        });
+        card.classList.remove('bg-surface-container');
+        card.classList.add('bg-surface-container-highest');
+        const dot = card.querySelector('.flaw-dot');
+        if (dot) dot.classList.remove('hidden');
+      });
+    });
+
+    // Quantum Seed Randomizer micro-interaction
+    const rollBtn = document.getElementById('quantum-roll-btn');
+    const seedDisplay = document.getElementById('quantum-seed-display');
+    if (rollBtn && seedDisplay) {
+      rollBtn.addEventListener('click', () => {
+        const randomHex = '0x' + Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase().padStart(5, '0');
+        seedDisplay.textContent = 'SEED: ' + randomHex;
+        seedDisplay.classList.add('text-primary-container');
+        setTimeout(() => seedDisplay.classList.remove('text-primary-container'), 500);
+
+        // Visual flash feedback
+        rollBtn.classList.add('scale-105');
+        setTimeout(() => rollBtn.classList.remove('scale-105'), 150);
+      });
+    }
+
+    // Manifestation launch trigger
+    const manifestBtn = document.getElementById('manifest-btn');
+    if (manifestBtn) {
+      manifestBtn.addEventListener('click', () => {
+        manifestBtn.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[20px] font-bold text-on-primary-fixed animate-spin">cyclone</span>
+            <span class="font-headline-md text-[17px] font-extrabold tracking-wider uppercase text-on-primary-fixed">INITIALIZING SYNAPSE...</span>
+          </div>
+          <span class="font-telemetry-micro text-telemetry-micro text-on-primary-fixed-variant tracking-wider font-mono uppercase mt-0.5">
+            ALLOCATING PROCEDURAL TIMELINE
+          </span>
+        `;
+        setTimeout(() => {
+          manifestBtn.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[20px] font-bold text-on-primary-fixed">check_circle</span>
+              <span class="font-headline-md text-[17px] font-extrabold tracking-wider uppercase text-on-primary-fixed">CONSCIOUSNESS THREAD ONLINE</span>
+            </div>
+            <span class="font-telemetry-micro text-telemetry-micro text-on-primary-fixed-variant tracking-wider font-mono uppercase mt-0.5">
+              ENTERING SIMULATION TICK #4,822
+            </span>
+          `;
+        }, 1200);
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface-container-low/90 backdrop-blur-xl shadow-[0_-1px_12px_rgba(0,0,0,0.7)]" data-active-classes="text-primary-container font-semibold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center min-w-[64px] h-12 text-on-surface-variant hover:text-on-surface transition-colors group" data-path="life-stream" href="#"><span class="material-symbols-outlined text-[22px] transition-transform group-hover:scale-110">terminal</span><span class="font-telemetry-micro text-telemetry-micro mt-1 uppercase">Life Stream</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[64px] h-12 transition-colors group text-primary-container font-semibold" data-path="genesis" href="#"><span class="material-symbols-outlined text-[22px] transition-transform group-hover:scale-110">strikethrough_s</span><span class="font-telemetry-micro text-telemetry-micro mt-1 uppercase">Genesis</span></a><a class="flex flex-col items-center justify-center min-w-[64px] h-12 text-on-surface-variant hover:text-on-surface transition-colors group" data-path="chronicle" href="#"><span class="material-symbols-outlined text-[22px] transition-transform group-hover:scale-110">psychology</span><span class="font-telemetry-micro text-telemetry-micro mt-1 uppercase">Chronicle</span></a><a class="flex flex-col items-center justify-center min-w-[64px] h-12 text-on-surface-variant hover:text-on-surface transition-colors group" data-path="multiverse" href="#"><span class="material-symbols-outlined text-[22px] transition-transform group-hover:scale-110">grid_view</span><span class="font-telemetry-micro text-telemetry-micro mt-1 uppercase">Multiverse</span></a></div></nav></body></html>

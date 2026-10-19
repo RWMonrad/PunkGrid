@@ -253,8 +253,8 @@ All routes: `/v1`; authenticated with short-lived bearer token except guest-prev
 | Method | Route | Purpose | Core response |
 |---|---|---|---|
 | `POST` | `/v1/worlds` | Create world from bounded template or Surprise Me genesis | `201 {worldId,version,episodeId?}`; `202` if narration pending |
-| `GET` | `/v1/worlds` | List current user's authorized worlds | paginated minimal summaries |
-| `GET` | `/v1/worlds/{id}` | Fetch authorized world and current state projection | `{world, stateVersion, summary, choices}` |
+| `GET` | `/v1/worlds` | List current user's authorized worlds | paginated minimal summaries, each carrying the caller's `identityId` and the world's `rulepackId` (ADR-019) |
+| `GET` | `/v1/worlds/{id}` | Fetch authorized world and current state projection | `{world,identityId,stateVersion,summary,choices}` |
 | `GET` | `/v1/worlds/{id}/episodes` | Paginated visible episodes | `{items,nextCursor}` |
 | `POST` | `/v1/worlds/{id}/choices` | Select a previously offered choice | `{commandResult, episodeStatus, episodeId?}` |
 | `POST` | `/v1/worlds/{id}/surprises` | Request bounded surprising event | `{commandResult, episodeStatus, episodeId?}` |
@@ -262,12 +262,20 @@ All routes: `/v1`; authenticated with short-lived bearer token except guest-prev
 | `GET` | `/v1/worlds/{id}/episodes/{episodeId}` | Poll pending/published episode | `{status,episode?}` |
 | `POST` | `/v1/worlds/{id}/pause` | Pause simulation | `{worldId,status,version}` |
 | `POST` | `/v1/worlds/{id}/archive` | Archive world | `{worldId,status,version}` |
+| `POST` | `/v1/worlds/{id}/episodes/{episodeId}/reports` | Report a published episode for moderation (FR-11 / US13) | `201 {reportId,receipt,status:'open'}`; a replayed `commandId` returns the stored case with `status:'duplicate'` |
+
+The report route is the eleventh route and is a registered deviation from the original ten-route list (ADR-018): §15 and FR-11 require an in-app report, §11 forbids parallel undocumented endpoints, and a report is not a command — it writes no world event, requires no `expectedWorldVersion`, and advances no version, while `Idempotency-Key`/`commandId` uniqueness keeps a double-tapped button to one case. Body: `{schemaVersion, commandId, actorIdentityId, reason, note?}` where `reason` is one of `sexual_content, violence, self_harm, real_person, offensive_language, other`. The stored case keeps a reason code and a bounded excerpt, never the episode text (§15).
+
+Mutation bodies additionally name `actorIdentityId`: the caller's own identity row for that world, read from `identityId` in the world fetch or list above (ADR-016). It is required because one account can hold several identities, and the server verifies it against the membership on every write — it grants no authority and discloses no other player's identity.
+
+The list row additionally names `rulepackId` (ADR-019). UI07 has to show a world the player can resume, and the only other handle the list gives is the opaque `worldId` — putting that on screen would show an internal identifier where the product promises fiction. The rulepack id is a catalogue key, not a secret: every row in the list is already a world the caller is a member of, so the field discloses nothing the caller is not entitled to, adds no route, and changes no request body. The client maps it to a human title through its own template catalogue.
 
 Mutation body sample:
 ```json
 {
   "schemaVersion": "1.0",
   "commandId": "01JEXAMPLECOMMAND0000000001",
+  "actorIdentityId": "01JEXAMPLEIDENTITY0000000001",
   "expectedWorldVersion": 7,
   "choiceId": "choice_confront_partner"
 }
@@ -385,12 +393,12 @@ Each scenario MUST assert: requested command and actor permissions, eligibility,
 - Explicit world fiction labeling; no misleading factual prediction of actual futures.
 - Default private; do not publish personal-world content without explicit user action.
 - Protect sensitive user input; encrypt in transit and at rest; minimum access privileges.
-- Moderation at input and output; safe bounded age-appropriate scenario policy. Validate store age requirements before release.
+- Moderation at input and output; safe bounded age-appropriate scenario policy. Validate store age requirements before release. The gate is a deterministic lexical screen in the engine, run **in addition to** the provider's own `content_flags` and with its own category vocabulary, so a rejected episode is reproducible in golden tests and replay without a classifier (ADR-018).
 - No impersonation of real individuals without adequate authorization; avoid real sensitive-person biographies.
 - Maintain prompt injection isolation: story content is untrusted data, not instructions.
 - Rate limits and generation spend caps protect against attacks and runaway bills.
 - Data export and deletion flow, retention schedules, and separate handling of derived memories, logs and generated assets.
-- Standard operational logs should not contain full private story text by default.
+- Standard operational logs should not contain full private story text by default. A moderation case is the documented exception in a bounded form (ADR-018): it stores `episodeId` plus the first 180 characters of the reported prose (260-character column limit, reason code and screen categories alongside it), which is what a reviewer needs to act on a report and is not the readable episode.
 - Observability: command ID, world ID pseudonym, ruleset, generation ID, version, latency, input/output cost, validator reason codes, fallback count, dedupe and conflict rates.
 
 ## 16. Delivery backlog, dependency order
