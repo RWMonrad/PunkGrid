@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070A14">
+  <title>PunkGrid — Live a Thousand Lives. Every Choice Matters.</title>
+  <meta name="description" content="PunkGrid is a narrative game in development for iOS and Android. Choices shape resources, relationships, and story arcs through deterministic simulation and AI prose.">
+  <meta name="keywords" content="AI game, narrative game, interactive fiction, choice-based game, cyberpunk, text adventure, AI storytelling, mobile game, iOS, Android">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="PunkGrid — Live a Thousand Lives. Every Choice Matters.">
+  <meta property="og:description" content="A narrative game in development for iOS and Android. Navigate The Glass Harbor, where choices shape resources, relationships, and story arcs.">
+  <meta property="og:image" content="https://punkgrid.com/images/welcome-portal.jpg">
+  <meta property="og:image:alt" content="PunkGrid — a lone figure before a glowing portal">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://punkgrid.com/">
+  <meta property="og:site_name" content="PunkGrid">
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:title" content="PunkGrid — Live a Thousand Lives.">
+  <meta property="twitter:description" content="A narrative game in development for iOS and Android. Deterministic simulation meets AI prose in The Glass Harbor.">
+  <meta property="twitter:image" content="https://punkgrid.com/images/welcome-portal.jpg">
+  <link rel="canonical" href="https://punkgrid.com/">
+  <link rel="icon" type="image/png" href="images/logo-256.png">
+  <link rel="apple-touch-icon" href="images/logo-256.png">
+  <link rel="apple-touch-icon" href="images/app-icon-home.png">
+
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"MobileApplication","name":"PunkGrid","operatingSystem":"iOS, Android","applicationCategory":"GameApplication","genre":"Narrative Game","description":"Narrative game in development for iOS and Android. Choices shape resources, relationships, and story arcs through deterministic simulation and AI prose. Store downloads are not available yet.","url":"https://punkgrid.com"}
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink: #0D1223;
+      --deep: #070A14;
+      --surface: #18213A;
+      --raised: #24314E;
+      --violet: #A58BFA;
+      --cyan: #70D8EB;
+      --text: #F5F7FF;
+      --muted: #BDC8E1;
+      --danger: #FF8F99;
+      --success: #8BE0B0;
+      --line: #66789C;
+      --font-display: 'Orbitron', 'Arial Black', sans-serif;
+      --font-mono: 'Space Mono', 'Courier New', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scrollbar-color: var(--raised) var(--deep); }
+    body {
+      font-family: var(--font-sans);
+      background: var(--deep);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    ::selection { background: var(--cyan); color: var(--deep); }
+
+    .bg-noise {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .bg-vignette {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(7,10,20,0.75) 100%);
+    }
+
+    /* ══════════ THE GRID — ambient depth field ══════════
+       A canvas of data-motes at three depths runs behind every scene: it drifts
+       on its own, parallaxes against the scroll, and leans with the pointer.
+       This is the layer that keeps the page alive between the staged scenes. */
+    #gridCanvas { position: fixed; inset: 0; z-index: 1; pointer-events: none; display: block; }
+
+    /* A single CRT scan band sweeps the viewport on a slow loop — the instrument
+       the whole HUD chrome implies, drawn over the scenery and under the text. */
+    .scan-sweep {
+      position: fixed; left: 0; right: 0; top: -160px; height: 160px; z-index: 2; pointer-events: none;
+      background: linear-gradient(to bottom, transparent, rgba(112,216,235,0.04) 40%, rgba(112,216,235,0.085) 50%, rgba(112,216,235,0.04) 60%, transparent);
+      animation: scanSweep 8.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+      will-change: transform;
+    }
+    @keyframes scanSweep {
+      0% { transform: translate3d(0, -15vh, 0); opacity: 0; }
+      10% { opacity: 1; }
+      86% { opacity: 1; }
+      100% { transform: translate3d(0, 118vh, 0); opacity: 0; }
+    }
+
+    /* ══════════ PRELOADER ══════════ */
+    .preloader {
+      position: fixed; inset: 0; z-index: 3000;
+      background: var(--deep);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;
+    }
+    body.loaded .preloader { display: none; }
+    .preloader-text {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      letter-spacing: 0.35rem; text-transform: uppercase; color: var(--cyan);
+    }
+    .preloader-bar { width: 180px; height: 2px; background: var(--raised); overflow: hidden; }
+    .preloader-bar::after {
+      content: ''; display: block; height: 100%; width: 40%;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+      animation: barScan 1.2s ease-in-out infinite;
+    }
+    @keyframes barScan { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+
+    /* ══════════ HUD CHROME ══════════ */
+    .hud-corner { position: fixed; width: 28px; height: 28px; z-index: 900; pointer-events: none; opacity: 0.5; }
+    .hud-corner::before { content: ''; position: absolute; inset: 0; border: 0 solid var(--cyan); }
+    .hud-tl { top: 14px; left: 14px; } .hud-tl::before { border-top-width: 2px; border-left-width: 2px; }
+    .hud-tr { top: 14px; right: 14px; } .hud-tr::before { border-top-width: 2px; border-right-width: 2px; }
+    .hud-bl { bottom: 14px; left: 14px; } .hud-bl::before { border-bottom-width: 2px; border-left-width: 2px; }
+    .hud-br { bottom: 14px; right: 14px; } .hud-br::before { border-bottom-width: 2px; border-right-width: 2px; }
+
+    .hud-scene {
+      position: fixed; bottom: 22px; left: 56px; z-index: 900; pointer-events: none;
+      font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.25rem;
+      text-transform: uppercase; color: var(--cyan); opacity: 0.85;
+      transition: opacity 0.4s;
+    }
+    .hud-scene .scene-count { color: var(--muted); }
+    .hud-progress {
+      position: fixed; bottom: 22px; right: 56px; z-index: 900; pointer-events: none;
+      font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.2rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 640px) {
+      .hud-scene { left: 44px; font-size: 0.55rem; }
+      .hud-progress { right: 44px; font-size: 0.55rem; }
+      .hud-corner { width: 18px; height: 18px; }
+    }
+
+    /* ══════════ NAV ══════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      padding: 1.1rem 2rem;
+      background: linear-gradient(to bottom, rgba(7,10,20,0.9), transparent);
+      transition: background 0.4s, border-color 0.4s;
+      border-bottom: 1px solid transparent;
+    }
+    nav.scrolled { background: rgba(7,10,20,0.92); border-bottom-color: rgba(102,120,156,0.25); backdrop-filter: blur(14px); }
+    .nav-inner { max-width: 1600px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .nav-logo {
+      display: flex; align-items: center; gap: 0.75rem;
+      text-decoration: none; color: var(--text);
+      font-family: var(--font-display); font-weight: 800; letter-spacing: 0.18rem; font-size: 0.95rem;
+    }
+    .nav-logo-icon {
+      width: 36px; height: 36px; flex-shrink: 0; display: block;
+      border-radius: 8px;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.18rem; text-transform: uppercase; font-family: var(--font-mono);
+      transition: color 0.3s;
+    }
+    .nav-links a:hover, .nav-links a:focus-visible { color: var(--cyan); }
+    .nav-cta {
+      background: var(--cyan); color: var(--deep);
+      padding: 0.6rem 1.4rem; border-radius: 4px;
+      text-decoration: none; font-weight: 800; font-size: 0.72rem;
+      letter-spacing: 0.12rem; text-transform: uppercase; font-family: var(--font-mono);
+      transition: all 0.3s; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+    }
+    .nav-cta:hover { background: var(--text); box-shadow: 0 0 24px rgba(112,216,235,0.45); }
+    .nav-progress {
+      position: absolute; bottom: 0; left: 0; height: 2px; width: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
+      transform-origin: left; transform: scaleX(0);
+    }
+
+    a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+
+    /* ══════════ SHARED ══════════ */
+    .scene-label {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      font-family: var(--font-mono); font-size: 0.68rem;
+      letter-spacing: 0.32rem; text-transform: uppercase;
+      margin-bottom: 1.4rem;
+    }
+    .scene-label::before { content: ''; width: 24px; height: 1px; background: currentColor; }
+    .btn {
+      padding: 0.95rem 2.2rem; text-decoration: none; font-weight: 800;
+      font-size: 0.85rem; letter-spacing: 0.12rem; text-transform: uppercase;
+      font-family: var(--font-mono);
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      transition: all 0.3s;
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+    }
+    .btn-primary { background: var(--cyan); color: var(--deep); }
+    .btn-primary:hover { background: var(--text); box-shadow: 0 0 36px rgba(112,216,235,0.4); transform: translateY(-2px); }
+    .btn-ghost { background: rgba(24,33,58,0.55); color: var(--text); border: 1px solid rgba(102,120,156,0.5); backdrop-filter: blur(10px); }
+    .btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); transform: translateY(-2px); }
+
+    .icon { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ══════════ SCENE 01 — HERO ══════════ */
+    .hero { position: relative; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .hero-bg {
+      position: absolute; inset: -12%;
+      background: url('images/welcome-portal.jpg') center/cover no-repeat;
+      will-change: transform; transform: scale(1.12);
+    }
+    .hero-overlay {
+      position: absolute; inset: 0; z-index: 2;
+      background: linear-gradient(to bottom, rgba(7,10,20,0.45) 0%, rgba(7,10,20,0.35) 40%, rgba(7,10,20,0.75) 80%, var(--deep) 100%);
+    }
+    /* The portal's light: a soft corona that widens as the camera dollies in,
+       so the hero reads as a place you are moving toward, not a poster. */
+    .hero-glow {
+      position: absolute; left: 50%; top: 42%; width: 46vw; height: 46vw; max-width: 680px; max-height: 680px;
+      z-index: 2; pointer-events: none;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(112,216,235,0.20), rgba(165,139,250,0.10) 42%, transparent 68%);
+      will-change: transform, opacity;
+    }
+    /* The tactical floor: a perspective grid that rolls toward the viewer on
+       scroll and idles on its own, so even a still page is in motion. The tilt
+       lives on the wrapper and the roll on the inner plane, which keeps the
+       roll on the compositor. */
+    .hero-floor {
+      position: absolute; left: -55%; right: -55%; bottom: -12%; height: 50%;
+      z-index: 2; pointer-events: none; perspective: 520px; opacity: 0.55;
+    }
+    .hero-floor-grid {
+      position: absolute; inset: -170% 0;
+      transform: rotateX(64deg);
+      transform-origin: top center;
+      background-image:
+        linear-gradient(rgba(112,216,235,0.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(112,216,235,0.16) 1px, transparent 1px);
+      background-size: 46px 46px;
+      -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%, black 78%, transparent);
+      mask-image: linear-gradient(to bottom, transparent, black 30%, black 78%, transparent);
+      will-change: transform;
+    }
+    .hero-content { position: relative; z-index: 3; text-align: center; max-width: 940px; padding: 0 2rem; will-change: transform, opacity; }
+    .hero-content::before {
+      content: ''; position: absolute; left: -3rem; right: -3rem; top: -2.5rem; bottom: -2.5rem;
+      background: radial-gradient(ellipse 62% 52% at 50% 34%, rgba(7, 10, 20, 0.66), rgba(7, 10, 20, 0.30) 58%, transparent 78%);
+      z-index: -1; pointer-events: none;
+    }
+
+    .intro { opacity: 0; transform: translateY(28px); transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1); }
+    body.loaded .intro { opacity: 1; transform: none; }
+    .intro-d1 { transition-delay: 0.15s; } .intro-d2 { transition-delay: 0.3s; }
+    .intro-d3 { transition-delay: 0.45s; } .intro-d4 { transition-delay: 0.6s; }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.1rem, 6vw, 3.8rem);
+      font-weight: 800; line-height: 1.3; margin-bottom: 1.6rem;
+      letter-spacing: 0.05em;
+      text-wrap: balance;
+    }
+    /* Clip each animated span independently so its text fill follows its transform. */
+    .hero-title .line > span {
+      background: linear-gradient(100deg, #FFFFFF 12%, #B4F0FA 92%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-title .line:nth-child(2) > span {
+      /* background-image, not the background shorthand: the shorthand resets
+         background-clip to border-box and the line paints as a solid bar. */
+      background-image: linear-gradient(100deg, #AEEBF8 12%, #C7B6FF 92%);
+    }
+    /* The title lands line by line out of clip windows, the way game
+       cinematics drop title cards. Hidden state is gated on html.js so a
+       no-JS visit still reads the headline. */
+    .hero-title .line { display: block; overflow: hidden; padding-bottom: 0.12em; margin-bottom: -0.12em; }
+    html.js .hero-title .line > span {
+      display: inline-block;
+      transform: translate3d(0, 110%, 0);
+      opacity: 0;
+      transition: transform 1.05s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+    }
+    body.loaded .hero-title .line > span { transform: translate3d(0, 0, 0); opacity: 1; }
+    body.loaded .hero-title .line:nth-child(2) > span { transition-delay: 0.14s; }
+    .hero-tagline {
+      font-size: clamp(1rem, 2.2vw, 1.3rem); color: var(--muted); font-weight: 300;
+      max-width: 620px; margin: 0 auto 2.6rem;
+      text-shadow: 0 2px 24px rgba(7,10,20,0.8);
+    }
+    .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .hero-float { position: absolute; z-index: 2; pointer-events: none; will-change: transform; }
+    .hero-float img {
+      border-radius: 12px; border: 1px solid rgba(112,216,235,0.25);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.5); display: block;
+    }
+    /* The top floats must stay clear of the 940px title column: a card — and
+       especially its cyan tag line — behind the first glyphs reads as two
+       texts lying over each other at laptop widths. The min() clamps pull
+       the cards against the column edge whenever the viewport is too narrow
+       for the percentage positions to clear it. */
+    .hero-float-1 { top: 16%; left: max(0.75rem, min(7%, calc(50vw - 692px))); opacity: 0.35; }
+    .hero-float-2 { top: 22%; right: max(0.75rem, min(8%, calc(50vw - 632px))); opacity: 0.3; }
+    .hero-float-3 { bottom: 24%; left: 12%; opacity: 0.25; }
+    .hero-float-4 { bottom: 28%; right: 10%; opacity: 0.3; }
+    .hero-float-tag {
+      position: absolute; bottom: -1.6rem; left: 0;
+      font-family: var(--font-mono); font-size: 0.55rem; letter-spacing: 0.2rem;
+      color: var(--cyan); text-transform: uppercase; white-space: nowrap;
+    }
+
+    .hero-hud {
+      position: absolute; bottom: 4.5rem; left: 50%; transform: translateX(-50%);
+      z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+      font-family: var(--font-mono); font-size: 0.6rem;
+      letter-spacing: 0.3rem; text-transform: uppercase; color: var(--muted);
+      will-change: opacity;
+    }
+    .hero-hud-line { width: 1px; height: 44px; background: linear-gradient(to bottom, var(--cyan), transparent); animation: hudPulse 2s infinite; }
+    @keyframes hudPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    /* ══════════ STICKY SCENES ══════════ */
+    .sticky-scene { position: relative; }
+    .sticky-scene .sticky-child { position: sticky; top: 0; height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; perspective: 1200px; }
+    .scene-bg { position: absolute; inset: -14%; background-position: center; background-size: cover; background-repeat: no-repeat; will-change: transform; transform: scale(1.06); }
+    .scene-overlay { position: absolute; inset: 0; z-index: 2; }
+    /* The fog plane: a foreground scanline haze that drifts against the
+       background's dolly — the counter-moving layer that sells depth in
+       every sticky scene. */
+    .scene-fog {
+      position: absolute; inset: -12%; z-index: 2; pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(7,10,20,0.16) 3px 4px);
+      opacity: 0.5; will-change: transform;
+    }
+    .scene-content { position: relative; z-index: 3; text-align: center; max-width: 900px; padding: 0 2rem; will-change: transform, opacity; }
+
+    .scene-content h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.9rem, 4.8vw, 4rem);
+      font-weight: 900; line-height: 1.12; margin-bottom: 1.6rem;
+      text-shadow: 0 4px 40px rgba(7,10,20,0.9);
+    }
+    .scene-content p {
+      font-size: clamp(1rem, 1.9vw, 1.25rem); color: var(--muted); line-height: 1.8;
+      max-width: 640px; margin: 0 auto;
+      text-shadow: 0 2px 20px rgba(7,10,20,0.8);
+    }
+
+    /* Staged entrances run as keyframed animations (fill: both) instead of
+       transitions, so each card's own hover transition stays free afterwards.
+       Hover lifts ride the independent `translate`/`rotate` properties, which
+       compose with the finished animation instead of fighting its fill state. */
+    html.js .scene-content > *, html.js .engine-card, html.js .path-card { opacity: 0; }
+    html.js .scene-content.active > * { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    html.js .scene-content.active > *:nth-child(2) { animation-delay: 0.08s; }
+    html.js .scene-content.active > *:nth-child(3) { animation-delay: 0.16s; }
+    html.js .scene-content.active > *:nth-child(4) { animation-delay: 0.24s; }
+    @keyframes rise {
+      from { opacity: 0; transform: translate3d(0, 42px, 0) rotateX(-7deg); }
+      to { opacity: 1; transform: none; }
+    }
+    html.js .scene-content.active .engine-card { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    html.js .scene-content.active .engine-card:nth-child(1) { animation-delay: 0.10s; }
+    html.js .scene-content.active .engine-card:nth-child(2) { animation-delay: 0.19s; }
+    html.js .scene-content.active .engine-card:nth-child(3) { animation-delay: 0.28s; }
+    html.js .scene-content.active .engine-card:nth-child(4) { animation-delay: 0.37s; }
+    html.js .scene-content.active .path-card { animation: doorOpen 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    html.js .scene-content.active .path-card:nth-child(1) { animation-delay: 0.05s; }
+    html.js .scene-content.active .path-card:nth-child(2) { animation-delay: 0.17s; }
+    html.js .scene-content.active .path-card:nth-child(3) { animation-delay: 0.29s; }
+    @keyframes doorOpen {
+      from { opacity: 0; transform: translate3d(0, 46px, -120px) rotateY(var(--door, 0deg)); }
+      to { opacity: 1; transform: none; }
+    }
+
+    /* SCENE 02 — PREMISE */
+    #manifesto { height: 220vh; }
+    #manifesto .scene-bg { background-image: url('images/genesis-surprise.jpg'); }
+    #manifesto .scene-overlay { background: linear-gradient(to bottom, var(--deep) 0%, rgba(7,10,20,0.55) 25%, rgba(7,10,20,0.55) 75%, var(--deep) 100%); }
+    #manifesto .scene-label { color: var(--violet); }
+
+    /* SCENE 03 — ENGINE */
+    #engine { height: 190vh; }
+    #engine .scene-bg { background-image: url('images/reality-engine.png'); }
+    #engine .scene-overlay { background: linear-gradient(to bottom, var(--deep) 0%, rgba(7,10,20,0.72) 25%, rgba(7,10,20,0.72) 75%, var(--deep) 100%); }
+    #engine .scene-label { color: var(--cyan); }
+
+    .engine-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; margin-top: 3rem; text-align: left; }
+    .engine-card {
+      background: rgba(13,18,35,0.82); backdrop-filter: blur(18px);
+      border: 1px solid rgba(102,120,156,0.3); border-radius: 12px;
+      padding: 1.6rem; transition: all 0.35s; position: relative; overflow: hidden;
+    }
+    .engine-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, var(--cyan), transparent);
+      opacity: 0; transition: opacity 0.35s;
+    }
+    .engine-card:hover { border-color: rgba(112,216,235,0.5); box-shadow: 0 14px 44px rgba(0,0,0,0.4); translate: 0 -4px; }
+    .engine-card:hover::before { opacity: 1; }
+    .engine-card .card-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: var(--raised); display: grid; place-items: center;
+      margin-bottom: 1.1rem; color: var(--cyan);
+      border: 1px solid rgba(102,120,156,0.3);
+    }
+    .engine-card:nth-child(2) .card-icon { color: var(--violet); }
+    .engine-card:nth-child(3) .card-icon { color: var(--success); }
+    .engine-card:nth-child(4) .card-icon { color: var(--danger); }
+    .engine-card h3 { font-family: var(--font-display); font-size: 0.95rem; font-weight: 800; letter-spacing: 0.06rem; margin-bottom: 0.5rem; }
+    .engine-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.55; margin: 0; }
+
+    /* SCENE 04 — WORLDS */
+    #worlds { height: 300vh; }
+    #worlds .scene-bg { background-image: url('images/glass-harbor-hero.jpg'); }
+    #worlds .scene-overlay { background: linear-gradient(to bottom, var(--deep) 0%, rgba(7,10,20,0.72) 20%, rgba(7,10,20,0.55) 50%, rgba(7,10,20,0.72) 80%, var(--deep) 100%); }
+    #worlds .scene-label { color: var(--cyan); }
+
+    .worlds-header { position: absolute; top: 6.5rem; left: 4rem; z-index: 3; will-change: transform, opacity; }
+    html.js .worlds-header { opacity: 0; }
+    .worlds-header h2 { font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 900; }
+    .worlds-header .worlds-sub { color: var(--muted); font-size: 0.95rem; margin-top: 0.4rem; max-width: 420px; }
+
+    .worlds-track {
+      position: absolute; bottom: 12%; left: 0; z-index: 3;
+      display: flex; gap: 1.6rem; padding: 0 4rem;
+      will-change: transform;
+    }
+    .world-depth { flex-shrink: 0; will-change: transform; }
+    .world-card {
+      flex-shrink: 0; width: 350px; height: 440px;
+      border-radius: 14px; overflow: hidden; position: relative;
+      border: 1px solid rgba(102,120,156,0.35);
+      transition: border-color 0.35s, box-shadow 0.35s, transform 0.35s;
+    }
+    .world-card:hover { border-color: var(--cyan); box-shadow: 0 0 44px rgba(112,216,235,0.22); transform: translateY(-6px) scale(1.02); }
+    .world-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s; display: block; }
+    .world-card:hover img { transform: scale(1.08); }
+    .world-card-info {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 2.4rem 1.3rem 1.2rem;
+      background: linear-gradient(to top, rgba(7,10,20,0.96), transparent);
+    }
+    .world-card-info h3 { font-family: var(--font-display); font-size: 1.05rem; font-weight: 800; letter-spacing: 0.08rem; }
+    .world-card-info p { color: var(--muted); font-size: 0.8rem; margin-top: 0.2rem; }
+    .world-meta {
+      position: absolute; top: 1rem; left: 1rem; right: 1rem;
+      display: flex; justify-content: space-between;
+      font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.18rem;
+      color: var(--cyan);
+    }
+    .world-meta span { background: rgba(7,10,20,0.72); padding: 0.3rem 0.55rem; backdrop-filter: blur(8px); border-radius: 3px; }
+
+    /* SCENE 05 — CAST */
+    .characters { position: relative; padding: 9rem 2rem 8rem; background: var(--deep); overflow: hidden; }
+    .characters-bg { position: absolute; inset: -20%; background: url('images/location-copenhagen.jpg') center/cover no-repeat; opacity: 0.07; will-change: transform; }
+    .characters-inner { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; }
+    .characters-header { text-align: center; margin-bottom: 4.5rem; }
+    .characters-header .scene-label { color: var(--success); }
+    .characters-header h2 { font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900; margin-bottom: 0.8rem; }
+    .characters-header p { color: var(--muted); font-size: 1.05rem; max-width: 560px; margin: 0 auto; }
+
+    .characters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1.3rem; }
+    .character-card {
+      position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 1;
+      border: 1px solid rgba(102,120,156,0.3); transition: all 0.4s;
+    }
+    .character-card::after {
+      content: ''; position: absolute; inset: 10px; border-radius: 8px;
+      border: 1px solid rgba(165,139,250,0); transition: border-color 0.4s, inset 0.4s;
+      pointer-events: none;
+    }
+    .character-card:hover { border-color: rgba(165,139,250,0.6); transform: translateY(-8px); box-shadow: 0 18px 50px rgba(0,0,0,0.45); }
+    .character-card:hover::after { border-color: rgba(165,139,250,0.7); inset: 8px; }
+    .character-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s; display: block; }
+    .character-card:hover img { transform: scale(1.07); }
+    /* Pointer-traced glare that follows the cursor across the portrait. */
+    .character-card .glare {
+      position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0;
+      transition: opacity 0.3s;
+      background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(245,247,255,0.20), transparent 58%);
+    }
+    .character-card:hover .glare { opacity: 1; }
+    .character-card-info {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 2rem 1rem 1rem;
+      background: linear-gradient(to top, rgba(7,10,20,0.96), transparent);
+    }
+    .character-card-info h3 { font-family: var(--font-display); font-size: 0.9rem; font-weight: 800; letter-spacing: 0.06rem; }
+    .character-card-info .role { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.22rem; text-transform: uppercase; color: var(--violet); display: block; margin-bottom: 0.15rem; }
+    .character-card-info p { color: var(--muted); font-size: 0.75rem; margin-top: 0.2rem; }
+
+    /* SCENE 06 — CHOICE */
+    #choices { height: 210vh; }
+    #choices .scene-bg { background-image: url('images/choice-paths.png'); }
+    #choices .scene-overlay { background: linear-gradient(to bottom, var(--deep) 0%, rgba(7,10,20,0.5) 22%, rgba(7,10,20,0.5) 78%, var(--deep) 100%); }
+    #choices .scene-label { color: var(--danger); }
+
+    .choices-paths { display: flex; gap: 1.2rem; justify-content: center; flex-wrap: wrap; margin-top: 3rem; perspective: 900px; }
+    .path-card {
+      background: rgba(13,18,35,0.85); backdrop-filter: blur(18px);
+      border: 1px solid rgba(102,120,156,0.35); border-radius: 12px;
+      padding: 1.5rem 1.8rem; min-width: 190px; text-align: left;
+      transition: all 0.35s; position: relative;
+    }
+    .path-card::before {
+      content: ''; position: absolute; left: 0; top: 12%; bottom: 12%; width: 3px;
+      border-radius: 2px; background: currentColor;
+    }
+    .path-card:nth-child(1) { color: var(--cyan); --door: -15deg; }
+    .path-card:nth-child(2) { color: var(--violet); --door: 0deg; }
+    .path-card:nth-child(3) { color: var(--success); --door: 15deg; }
+    .path-card:hover { border-color: currentColor; box-shadow: 0 14px 40px rgba(0,0,0,0.4); }
+    @media (hover: hover) {
+      .path-card:hover { translate: 0 -5px 36px; rotate: y calc(var(--door, 0deg) * -0.35); }
+    }
+    .path-letter { font-family: var(--font-display); font-size: 1.8rem; font-weight: 900; margin-bottom: 0.4rem; }
+    .path-card h3 { font-family: var(--font-display); font-size: 0.95rem; font-weight: 800; color: var(--text); }
+    .path-card p { color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+
+    /* SCENE 07 — EXPERIENCE */
+    .story { position: relative; padding: 9rem 2rem; overflow: hidden; }
+    .story-bg { position: absolute; inset: -18%; background: url('images/genesis-guided.jpg') center/cover no-repeat; will-change: transform; transform: scale(1.15); }
+    .story-overlay {
+      position: absolute; inset: 0; z-index: 2;
+      background: linear-gradient(to right, rgba(7,10,20,0.96) 0%, rgba(7,10,20,0.82) 42%, rgba(7,10,20,0.62) 60%, rgba(7,10,20,0.9) 100%);
+    }
+    .story-inner {
+      position: relative; z-index: 3; max-width: 1300px; margin: 0 auto;
+      display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 5rem; align-items: center;
+    }
+    .story-text .scene-label { color: var(--cyan); }
+    .story-text h2 { font-family: var(--font-display); font-size: clamp(1.8rem, 3.8vw, 3rem); font-weight: 900; line-height: 1.18; margin-bottom: 1.4rem; }
+    .story-text p { color: var(--muted); font-size: 1.02rem; line-height: 1.8; margin-bottom: 1.4rem; }
+    .story-screenshot { position: relative; will-change: transform; }
+    .story-screenshot .screenshot-glow {
+      position: absolute; inset: -24px; z-index: -1;
+      background: radial-gradient(ellipse, rgba(112,216,235,0.18), transparent 70%); border-radius: 44px;
+    }
+    .story-screenshot img {
+      width: 100%; max-width: 380px; border-radius: 22px; display: block; margin: 0 auto;
+      border: 2px solid rgba(112,216,235,0.35);
+      box-shadow: 0 24px 70px rgba(0,0,0,0.55), 0 0 46px rgba(112,216,235,0.12);
+    }
+    .story-screenshot .screenshot-caption {
+      text-align: center; margin-top: 1rem;
+      font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.25rem;
+      text-transform: uppercase; color: var(--muted);
+    }
+
+    /* SCENE 08 — GALLERY */
+    .gallery { position: relative; padding: 7rem 0 8rem; overflow: hidden; background: var(--deep); }
+    .gallery-header { position: relative; z-index: 2; text-align: center; margin-bottom: 3.5rem; padding: 0 2rem; }
+    .gallery-header .scene-label { color: var(--violet); }
+    .gallery-header h2 { font-family: var(--font-display); font-size: clamp(1.8rem, 3.8vw, 2.8rem); font-weight: 900; }
+    .gallery-strip {
+      display: flex; gap: 1.4rem; padding: 0 3rem;
+      overflow-x: auto; scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
+      -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+      mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+    }
+    .gallery-strip::-webkit-scrollbar { display: none; }
+    .gallery-item {
+      flex-shrink: 0; width: 270px; scroll-snap-align: center;
+      border-radius: 14px; overflow: hidden; position: relative;
+      border: 1px solid rgba(102,120,156,0.3); transition: all 0.4s;
+      --gy: 0px; transform: translateY(var(--gy));
+    }
+    .gallery-item:hover { border-color: var(--cyan); box-shadow: 0 0 36px rgba(112,216,235,0.18); transform: translateY(var(--gy)) scale(1.03); }
+    .gallery-item img { width: 100%; height: 360px; object-fit: cover; display: block; transition: transform 0.7s; }
+    .gallery-item:hover img { transform: scale(1.06); }
+    .gallery-item.wide { width: 480px; }
+    .gallery-item.wide img { height: 360px; }
+    /* On wide screens the strip breathes: alternate cards ride at different
+       altitudes so the row reads as depth, not a shelf. */
+    @media (min-width: 641px) {
+      .gallery-strip .gallery-item:nth-child(odd) { --gy: 18px; }
+      .gallery-strip .gallery-item:nth-child(even) { --gy: -14px; }
+    }
+    .gallery-caption {
+      position: absolute; bottom: 0; left: 0; right: 0; padding: 1.8rem 1rem 0.9rem;
+      background: linear-gradient(to top, rgba(7,10,20,0.92), transparent);
+      font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.22rem;
+      text-transform: uppercase; color: var(--cyan);
+    }
+
+    /* SCENE 09 — CTA */
+    #cta { height: 170vh; }
+    #cta .scene-bg { background-image: url('images/cta-skyline.png'); }
+    #cta .scene-overlay { background: linear-gradient(to bottom, var(--deep) 0%, rgba(7,10,20,0.5) 25%, rgba(7,10,20,0.5) 75%, var(--deep) 100%); }
+    #cta .scene-label { color: var(--success); }
+    .store-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2.8rem; }
+    .store-btn {
+      display: flex; align-items: center; gap: 1rem;
+      background: rgba(13,18,35,0.85); backdrop-filter: blur(18px);
+      border: 2px solid rgba(102,120,156,0.45); border-radius: 12px;
+      padding: 0.9rem 1.9rem; color: var(--text);
+      min-width: 210px; cursor: default;
+    }
+    .store-btn svg { width: 26px; height: 26px; flex-shrink: 0; }
+    .store-btn-text { text-align: left; }
+    .store-btn-text small { display: block; font-size: 0.62rem; color: var(--muted); letter-spacing: 0.14rem; text-transform: uppercase; font-family: var(--font-mono); }
+    .store-btn-text strong { font-size: 1.05rem; font-family: var(--font-display); font-weight: 800; letter-spacing: 0.02rem; }
+
+    /* ══════════ THE WIRE — editorial ticker ══════════ */
+    .ticker {
+      position: relative; z-index: 5; overflow: hidden;
+      border-top: 1px solid rgba(102,120,156,0.22); border-bottom: 1px solid rgba(102,120,156,0.22);
+      background: rgba(7,10,20,0.78); backdrop-filter: blur(10px);
+      padding: 0.9rem 0;
+    }
+    .ticker-track { display: flex; width: max-content; animation: tickerRun 36s linear infinite; will-change: transform; }
+    .ticker-track span {
+      font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.3rem;
+      text-transform: uppercase; color: var(--muted); white-space: nowrap; padding-right: 3.5rem;
+    }
+    .ticker-track em { font-style: normal; color: var(--cyan); }
+    @keyframes tickerRun { to { transform: translate3d(-50%, 0, 0); } }
+
+    /* ══════════ REVEAL ══════════ */
+    html.js [data-reveal] { opacity: 0; transform: translateY(36px); transition: opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1); }
+    html.js [data-reveal].revealed { opacity: 1; transform: none; }
+
+    /* ══════════ FOOTER ══════════ */
+    footer { position: relative; z-index: 10; background: var(--deep); border-top: 1px solid rgba(102,120,156,0.2); padding: 4rem 2rem 2rem; }
+    .footer-inner { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 3rem; }
+    .footer-brand p { color: var(--muted); margin-top: 1rem; line-height: 1.7; font-size: 0.95rem; }
+    .footer-col h4 { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.25rem; color: var(--cyan); }
+    .footer-col ul { list-style: none; }
+    .footer-col li { margin-bottom: 0.5rem; }
+    .footer-col a { color: var(--muted); text-decoration: none; font-size: 0.88rem; transition: color 0.3s; }
+    .footer-col a:hover { color: var(--cyan); }
+    .footer-bottom {
+      max-width: 1400px; margin: 0 auto; padding-top: 2rem;
+      border-top: 1px solid rgba(102,120,156,0.2);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem; color: var(--muted); font-size: 0.82rem;
+      font-family: var(--font-mono);
+    }
+
+    /* ══════════ RESPONSIVE ══════════ */
+    @media (max-width: 968px) {
+      .nav-links { display: none; }
+      .story-inner { grid-template-columns: 1fr; text-align: center; gap: 3.5rem; }
+      .worlds-header { left: 2rem; right: 2rem; }
+      .worlds-track { padding: 0 2rem; }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+    }
+    /* Between 968px and 1400px there is no room beside the 940px hero column,
+       so the floats hide there instead of crowding the title. */
+    @media (max-width: 1399px) {
+      .hero-float { display: none; }
+    }
+    @media (max-width: 640px) {
+      .hero-buttons { flex-direction: column; align-items: center; }
+      .btn { width: 100%; justify-content: center; max-width: 320px; }
+      .choices-paths { flex-direction: column; align-items: center; }
+      .path-card { width: 100%; max-width: 320px; }
+      .footer-inner { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; text-align: center; }
+      .characters-grid { grid-template-columns: repeat(2, 1fr); }
+      .world-card { width: 250px; height: 340px; }
+      .gallery-item { width: 220px; }
+      .gallery-item.wide { width: 300px; }
+      .engine-cards { gap: 0.9rem; }
+      .hud-scene, .hud-progress { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; transition-duration: 0.01ms !important; transition-delay: 0s !important; }
+      html.js [data-reveal], .intro { opacity: 1; transform: none; }
+      html.js .scene-content, html.js .worlds-header { opacity: 1; }
+      html.js .scene-content > *, html.js .engine-card, html.js .path-card { opacity: 1; }
+      html.js .scene-content.active > *, html.js .scene-content.active .engine-card, html.js .scene-content.active .path-card { animation: none; }
+      html.js .hero-title .line > span { transform: none; opacity: 1; }
+      #worlds { height: auto; }
+      #worlds .sticky-child { position: relative; height: auto; min-height: 100svh; display: block; padding: 6.5rem clamp(2rem, 4vw, 4rem) 4rem; }
+      .worlds-header { position: relative; inset: auto; margin-bottom: 2rem; }
+      .worlds-track { position: relative; inset: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); padding: 0; }
+      .world-card { width: 100%; }
+      #gridCanvas, .scan-sweep { display: none; }
+      .ticker-track { animation: none; }
+      html.js .preloader { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <script>document.documentElement.classList.add('js');</script>
+
+  <div class="preloader" aria-hidden="true">
+    <div class="preloader-text">Initializing Reality Engine</div>
+    <div class="preloader-bar"></div>
+  </div>
+
+  <div class="bg-noise" aria-hidden="true"></div>
+  <div class="bg-vignette" aria-hidden="true"></div>
+
+  <canvas id="gridCanvas" aria-hidden="true"></canvas>
+  <div class="scan-sweep" aria-hidden="true"></div>
+
+  <div class="hud-corner hud-tl" aria-hidden="true"></div>
+  <div class="hud-corner hud-tr" aria-hidden="true"></div>
+  <div class="hud-corner hud-bl" aria-hidden="true"></div>
+  <div class="hud-corner hud-br" aria-hidden="true"></div>
+  <div class="hud-scene" id="hudScene" aria-hidden="true"><span class="scene-count">SCENE 01 / 09</span> &nbsp;·&nbsp; THE PORTAL</div>
+  <div class="hud-progress" aria-hidden="true"><span id="hudPct">000%</span> · <span id="hudTick">IN DEVELOPMENT</span></div>
+
+  <nav id="nav">
+    <div class="nav-inner">
+      <a href="#hero" class="nav-logo">
+        <img class="nav-logo-icon" src="images/logo-256.png" alt="">
+        <span>PUNKGRID</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#engine">Engine</a></li>
+        <li><a href="#worlds">Worlds</a></li>
+        <li><a href="#characters">Cast</a></li>
+        <li><a href="#choices">Choices</a></li>
+        <li><a href="#gallery">Art</a></li>
+      </ul>
+      <a href="#cta" class="nav-cta">Release status</a>
+    </div>
+    <div class="nav-progress" id="navProgress"></div>
+  </nav>
+
+  <!-- ══════════ SCENE 01 — THE PORTAL ══════════ -->
+  <section class="hero" id="hero" data-scene-name="THE PORTAL">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-glow" id="heroGlow" aria-hidden="true"></div>
+    <div class="hero-floor" aria-hidden="true"><div class="hero-floor-grid" id="heroFloor"></div></div>
+
+    <div class="hero-float hero-float-1" data-depth="0.45" data-mouse="0.020">
+      <img src="images/location-singapore.jpg" alt="" width="210" aria-hidden="true">
+      <span class="hero-float-tag">World concept · Singapore</span>
+    </div>
+    <div class="hero-float hero-float-2" data-depth="0.55" data-mouse="0.030">
+      <img src="images/cast-ada-lin.jpg" alt="" width="150" aria-hidden="true">
+      <span class="hero-float-tag">Ada Lin · Operations</span>
+    </div>
+    <div class="hero-float hero-float-3" data-depth="0.38" data-mouse="0.014">
+      <img src="images/location-mars.jpg" alt="" width="185" aria-hidden="true">
+      <span class="hero-float-tag">World concept · Mars</span>
+    </div>
+    <div class="hero-float hero-float-4" data-depth="0.5" data-mouse="0.024">
+      <img src="images/cast-mara-venn.jpg" alt="" width="140" aria-hidden="true">
+      <span class="hero-float-tag">Mara Venn · Cofounder</span>
+    </div>
+
+    <div class="hero-content" id="heroContent">
+      <h1 class="hero-title" id="heroTitle">
+        <span class="line"><span>Live a Thousand Lives.</span></span>
+        <span class="line"><span>Every Choice Matters.</span></span>
+      </h1>
+      <p class="hero-tagline intro intro-d3">
+        A narrative game in development for iOS and Android.
+        Make choices. Shape relationships. Face the consequences.
+      </p>
+      <div class="hero-buttons intro intro-d4">
+        <a href="#cta" class="btn btn-primary">Release status</a>
+        <a href="#manifesto" class="btn btn-ghost">Enter the Grid</a>
+      </div>
+    </div>
+
+    <div class="hero-hud" id="heroHud">
+      <span>Scroll to enter the grid</span>
+      <div class="hero-hud-line"></div>
+    </div>
+  </section>
+
+  <!-- ══════════ SCENE 02 — THE PREMISE ══════════ -->
+  <section class="sticky-scene" id="manifesto" data-scene-name="THE PREMISE">
+    <div class="sticky-child">
+      <div class="scene-bg" data-bg></div>
+      <div class="scene-overlay"></div>
+      <div class="scene-fog" data-fog aria-hidden="true"></div>
+      <div class="scene-content" data-content>
+        <span class="scene-label">Scene 02 · The Premise</span>
+        <h2>Your reality is only<br>one of many.</h2>
+        <p>
+          In PunkGrid, choices change resources, relationships, and story arcs.
+          The Reality Engine resolves the consequences. AI prose brings the
+          unfolding situation to life.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ THE WIRE — editorial ticker ══════════ -->
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>GLASS HARBOR <em>·</em> IN DEVELOPMENT <em>·</em> WORLD CONCEPTS: SINGAPORE / COPENHAGEN / LAGOS / MARS <em>·</em> CHOICES SHAPE STORY ARCS <em>·</em> RESOURCES CHANGE <em>·</em> RELATIONSHIPS MATTER <em>·</em> DETERMINISTIC SIMULATION + AI PROSE <em>·</em> </span>
+      <span>GLASS HARBOR <em>·</em> IN DEVELOPMENT <em>·</em> WORLD CONCEPTS: SINGAPORE / COPENHAGEN / LAGOS / MARS <em>·</em> CHOICES SHAPE STORY ARCS <em>·</em> RESOURCES CHANGE <em>·</em> RELATIONSHIPS MATTER <em>·</em> DETERMINISTIC SIMULATION + AI PROSE <em>·</em> </span>
+    </div>
+  </div>
+
+  <!-- ══════════ SCENE 03 — THE ENGINE ══════════ -->
+  <section class="sticky-scene" id="engine" data-scene-name="THE ENGINE">
+    <div class="sticky-child">
+      <div class="scene-bg" data-bg></div>
+      <div class="scene-overlay"></div>
+      <div class="scene-fog" data-fog aria-hidden="true"></div>
+      <div class="scene-content" data-content>
+        <span class="scene-label">Scene 03 · The Technology</span>
+        <h2>One Engine.<br>Choices With Weight.</h2>
+        <div class="engine-cards">
+          <div class="engine-card">
+            <div class="card-icon">
+              <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+            </div>
+            <h3>Guided Scenario</h3>
+            <p>Step into The Glass Harbor as Helix Transit's founder. An acquisition offer puts the company and its loyalties to the test.</p>
+          </div>
+          <div class="engine-card">
+            <div class="card-icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+            </div>
+            <h3>Reality Engine</h3>
+            <p>Deterministic simulation resolves choices and updates world state. AI writes prose around those outcomes.</p>
+          </div>
+          <div class="engine-card">
+            <div class="card-icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="8" cy="7" r="1.6" fill="currentColor"/><circle cx="14" cy="12" r="1.6" fill="currentColor"/><circle cx="10" cy="17" r="1.6" fill="currentColor"/></svg>
+            </div>
+            <h3>Your Worlds</h3>
+            <p>Return to a story or archive a world to make room for another. Active-world limits apply.</p>
+          </div>
+          <div class="engine-card">
+            <div class="card-icon">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5M7 21h10"/><path d="M5 8c0 2.5 3 2.5 3 5s-3 2.5-3 5M19 8c0 2.5-3 2.5-3 5s3 2.5 3 5"/></svg>
+            </div>
+            <h3>Meaningful Choices</h3>
+            <p>Choices shift resources, relationships, and story arcs. Weigh the deal against the people depending on you.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ SCENE 04 — THE HARBOR ══════════ -->
+  <section class="sticky-scene" id="worlds" data-scene-name="THE HARBOR">
+    <div class="sticky-child">
+      <div class="scene-bg" data-bg></div>
+      <div class="scene-overlay"></div>
+      <div class="scene-fog" data-fog aria-hidden="true"></div>
+      <div class="worlds-header" data-content>
+        <span class="scene-label">Scene 04 · The Worlds</span>
+        <h2>The Glass Harbor</h2>
+        <p class="worlds-sub">Four world concepts. A glimpse of PunkGrid's visual direction.</p>
+      </div>
+      <div class="worlds-track" id="worldsTrack">
+        <div class="world-depth">
+          <div class="world-card">
+            <img src="images/location-singapore.jpg" alt="Singapore — neon-lit harbor with autonomous cargo cranes">
+            <div class="world-meta"><span>WORLD CONCEPT</span><span>01</span></div>
+            <div class="world-card-info">
+              <h3>Singapore</h3>
+              <p>Neon cranes and autonomous cargo. The port never sleeps.</p>
+            </div>
+          </div>
+        </div>
+        <div class="world-depth">
+          <div class="world-card">
+            <img src="images/location-copenhagen.jpg" alt="Copenhagen — rain-soaked industrial waterfront">
+            <div class="world-meta"><span>WORLD CONCEPT</span><span>02</span></div>
+            <div class="world-card-info">
+              <h3>Copenhagen</h3>
+              <p>Rain-slick cobblestone and corporate secrets.</p>
+            </div>
+          </div>
+        </div>
+        <div class="world-depth">
+          <div class="world-card">
+            <img src="images/location-lagos.jpg" alt="Lagos — vibrant illuminated skyline and waterfront trade">
+            <div class="world-meta"><span>WORLD CONCEPT</span><span>03</span></div>
+            <div class="world-card-info">
+              <h3>Lagos</h3>
+              <p>Tradition meets hyper-modern trade networks.</p>
+            </div>
+          </div>
+        </div>
+        <div class="world-depth">
+          <div class="world-card">
+            <img src="images/location-mars.jpg" alt="Mars — remote colony station under purple auroras">
+            <div class="world-meta"><span>WORLD CONCEPT</span><span>04</span></div>
+            <div class="world-card-info">
+              <h3>Mars</h3>
+              <p>The last frontier. Isolated. Desperate. Alive.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ SCENE 05 — THE CAST ══════════ -->
+  <section class="characters" id="characters" data-scene-name="THE CAST">
+    <div class="characters-bg" id="charactersBg"></div>
+    <div class="characters-inner">
+      <div class="characters-header" data-reveal>
+        <span class="scene-label">Scene 05 · The Cast</span>
+        <h2>People of the Harbor</h2>
+        <p>Every character has their own agenda. Trust is earned. Betrayal is remembered.</p>
+      </div>
+      <div class="characters-grid">
+        <div class="character-card" data-reveal>
+          <img src="images/cast-ada-lin.jpg" alt="Ada Lin — Helix Transit's operations director, protecting employees">
+          <div class="glare" aria-hidden="true"></div>
+          <div class="character-card-info">
+            <span class="role">Operations</span>
+            <h3>Ada Lin</h3>
+            <p>Director. Puts employees before the deal.</p>
+          </div>
+        </div>
+        <div class="character-card" data-reveal>
+          <img src="images/cast-mara-venn.jpg" alt="Mara Venn — Helix Transit's cofounder">
+          <div class="glare" aria-hidden="true"></div>
+          <div class="character-card-info">
+            <span class="role">Cofounder</span>
+            <h3>Mara Venn</h3>
+            <p>Your cofounder. The offer tests your trust.</p>
+          </div>
+        </div>
+        <div class="character-card" data-reveal>
+          <img src="images/cast-alex-vale.jpg" alt="Alex Vale — the player character, founder and CEO of Helix Transit">
+          <div class="glare" aria-hidden="true"></div>
+          <div class="character-card-info">
+            <span class="role">Founder / CEO</span>
+            <h3>Alex Vale</h3>
+            <p>You. Helix Transit's future is in your hands.</p>
+          </div>
+        </div>
+        <div class="character-card" data-reveal>
+          <img src="images/cast-ilya-chen.jpg" alt="Ilya Chen — an investor seeking a fast exit">
+          <div class="glare" aria-hidden="true"></div>
+          <div class="character-card-info">
+            <span class="role">Investor</span>
+            <h3>Ilya Chen</h3>
+            <p>Wants a fast exit. Every delay costs.</p>
+          </div>
+        </div>
+        <div class="character-card" data-reveal>
+          <img src="images/cast-noor-rahman.jpg" alt="Noor Rahman — a journalist verifying provenance">
+          <div class="glare" aria-hidden="true"></div>
+          <div class="character-card-info">
+            <span class="role">Journalist</span>
+            <h3>Noor Rahman</h3>
+            <p>Verifies the evidence before publishing.</p>
+          </div>
+        </div>
+        <div class="character-card" data-reveal>
+          <img src="images/cast-soren-pike.jpg" alt="Soren Pike — an acquisition negotiator">
+          <div class="glare" aria-hidden="true"></div>
+          <div class="character-card-info">
+            <span class="role">Negotiator</span>
+            <h3>Soren Pike</h3>
+            <p>Negotiates the acquisition. Terms matter.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ SCENE 06 — THE CHOICE ══════════ -->
+  <section class="sticky-scene" id="choices" data-scene-name="THE CHOICE">
+    <div class="sticky-child">
+      <div class="scene-bg" data-bg></div>
+      <div class="scene-overlay"></div>
+      <div class="scene-fog" data-fog aria-hidden="true"></div>
+      <div class="scene-content" data-content>
+        <span class="scene-label">Scene 06 · The Moment</span>
+        <h2>Choices<br>Shape Worlds.</h2>
+        <p>
+          Brief your staff, confront your cofounder, or investigate the buyer.
+          Your choices change resources, relationships, and story arcs.
+          The next move is yours.
+        </p>
+        <div class="choices-paths">
+          <div class="path-card">
+            <div class="path-letter">A</div>
+            <h3>Brief Staff</h3>
+            <p>Control the narrative. Protect your people.</p>
+          </div>
+          <div class="path-card">
+            <div class="path-letter">B</div>
+            <h3>Confront Mara</h3>
+            <p>Ask your cofounder where she stands.</p>
+          </div>
+          <div class="path-card">
+            <div class="path-letter">C</div>
+            <h3>Trace the Buyer</h3>
+            <p>Follow the money. Find the truth.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ SCENE 07 — THE EXPERIENCE ══════════ -->
+  <section class="story" id="story" data-scene-name="THE EXPERIENCE">
+    <div class="story-bg" id="storyBg"></div>
+    <div class="story-overlay"></div>
+    <div class="story-inner">
+      <div class="story-text" data-reveal>
+        <span class="scene-label">Scene 07 · The Experience</span>
+        <h2>A Company. An Offer. Divided Loyalties.</h2>
+        <p>
+          In The Glass Harbor, you are Alex Vale, founder and CEO of Helix Transit.
+          An acquisition offer tests your partnership with Mara, while investor
+          pressure and employees' futures pull you in different directions.
+        </p>
+        <p>
+          This guided scenario pairs deterministic simulation with AI prose.
+          Weigh the terms, question the evidence, and see how your decisions
+          change resources, relationships, and story arcs.
+        </p>
+        <a href="#cta" class="btn btn-primary">Release status</a>
+      </div>
+      <div class="story-screenshot" id="storyShot" data-reveal>
+        <div class="screenshot-glow"></div>
+        <img src="images/preview-choices.png" alt="PunkGrid interface preview — The Glass Harbor scene with three choice cards">
+        <div class="screenshot-caption">Interface preview · The Glass Harbor</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ SCENE 08 — THE GALLERY ══════════ -->
+  <section class="gallery" id="gallery" data-scene-name="THE GALLERY">
+    <div class="gallery-header" data-reveal>
+      <span class="scene-label">Scene 08 · The Art</span>
+      <h2>Every Pixel Tells a Story.</h2>
+    </div>
+    <div class="gallery-strip">
+      <div class="gallery-item wide">
+        <img src="images/glass-harbor-hero.jpg" alt="Glass Harbor — panoramic neon-lit port city at night">
+        <div class="gallery-caption">The Glass Harbor · Panorama</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/welcome-emblem.jpg" alt="The Reality Engine emblem — glowing crystalline core">
+        <div class="gallery-caption">Reality Engine · Core</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/location-singapore.jpg" alt="Singapore concept art — autonomous port with blue-lit vessels">
+        <div class="gallery-caption">World concept · Singapore</div>
+      </div>
+      <div class="gallery-item wide">
+        <img src="images/welcome-portal.jpg" alt="A lone figure before the glowing portal">
+        <div class="gallery-caption">The Portal · Genesis</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/location-copenhagen.jpg" alt="Copenhagen concept art — rain-soaked industrial waterfront">
+        <div class="gallery-caption">World concept · Copenhagen</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/location-lagos.jpg" alt="Lagos concept art — illuminated skyline and waterfront trade">
+        <div class="gallery-caption">World concept · Lagos</div>
+      </div>
+      <div class="gallery-item wide">
+        <img src="images/genesis-guided.jpg" alt="Guided genesis — the birth of a new world">
+        <div class="gallery-caption">Guided Genesis · Worldbirth</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/location-mars.jpg" alt="Mars concept art — colony station under purple auroras">
+        <div class="gallery-caption">World concept · Mars</div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/genesis-surprise.jpg" alt="The arch — stepping from shadow into a new reality">
+        <div class="gallery-caption">The Arch · Surprise Genesis</div>
+      </div>
+      <div class="gallery-item wide">
+        <img src="images/hero-home.png" alt="PunkGrid interface preview — home screen concept with location cards">
+        <div class="gallery-caption">Interface preview · Home</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ SCENE 09 — THE BEGINNING ══════════ -->
+  <section class="sticky-scene" id="cta" data-scene-name="THE BEGINNING" data-hold="true">
+    <div class="sticky-child">
+      <div class="scene-bg" data-bg></div>
+      <div class="scene-overlay"></div>
+      <div class="scene-fog" data-fog aria-hidden="true"></div>
+      <div class="scene-content" data-content>
+        <span class="scene-label">Scene 09 · Release status</span>
+        <h2>Your Next Life<br>Is Taking Shape.</h2>
+        <p>PunkGrid is in development for iOS and Android. Store downloads are not available yet.</p>
+        <div class="store-buttons">
+          <div class="store-btn">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 8.5 8.5 2 9l5 5-1.5 7L12 17.5 18.5 21 17 14l5-5-6.5-.5L12 2z" transform="rotate(-8 12 12)"/></svg>
+            <div class="store-btn-text">
+              <small>Not yet available</small>
+              <strong>App Store</strong>
+            </div>
+          </div>
+          <div class="store-btn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3.5 14.5 12 4 20.5c-.4-.2-.6-.6-.6-1.1V4.6c0-.5.2-.9.6-1.1z" fill="#8BE0B0"/><path d="m16 9.7 3.6 2.1c.7.4.7 1.4 0 1.8L16 15.7 12.8 12 16 9.7z" fill="#FF8F99"/><path d="M4 3.5 14.5 12 4 20.5c-.5-.3-.8-.8-.8-1.4V4.9c0-.6.3-1.1.8-1.4z" fill="#70D8EB"/><path d="M4.6 3.7c.3-.2.7-.2 1.1 0L16 9.7 12.8 12 4 3.7c.2-.1.4-.1.6 0z" fill="#A58BFA"/></svg>
+            <div class="store-btn-text">
+              <small>Not yet available</small>
+              <strong>Google Play</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="#hero" class="nav-logo">
+          <img class="nav-logo-icon" src="images/logo-256.png" alt="">
+          <span>PUNKGRID</span>
+        </a>
+        <p>Every choice matters. A narrative game in development for iOS and Android.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#engine">Engine</a></li>
+          <li><a href="#worlds">World concepts</a></li>
+          <li><a href="#characters">Cast</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="#manifesto">The premise</a></li>
+          <li><a href="#choices">Choices</a></li>
+          <li><a href="#story">The story</a></li>
+          <li><a href="#gallery">Art</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Release</h4>
+        <ul>
+          <li><a href="#cta">Release status</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 PunkGrid. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+      const saveData = !!(navigator.connection && navigator.connection.saveData);
+      const fieldOn = !reduced && !saveData;
+      const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+      const lerp = (a, b, t) => a + (b - a) * t;
+
+      const heroBg = document.getElementById('heroBg');
+      const heroGlow = document.getElementById('heroGlow');
+      const heroFloor = document.getElementById('heroFloor');
+      const heroContent = document.getElementById('heroContent');
+      const heroHud = document.getElementById('heroHud');
+      const floats = Array.from(document.querySelectorAll('.hero-float'));
+      const nav = document.getElementById('nav');
+      const navProgress = document.getElementById('navProgress');
+      const hudScene = document.getElementById('hudScene');
+      const hudPct = document.getElementById('hudPct');
+      const worldsTrack = document.getElementById('worldsTrack');
+      const worldDepths = Array.from(document.querySelectorAll('.world-depth'));
+      const storyBg = document.getElementById('storyBg');
+      const charactersBg = document.getElementById('charactersBg');
+      const storyShot = document.getElementById('storyShot');
+      const storySection = document.getElementById('story');
+      const charactersSection = document.getElementById('characters');
+      const canvas = document.getElementById('gridCanvas');
+      const ctx = canvas ? canvas.getContext('2d') : null;
+
+      const sceneEls = Array.from(document.querySelectorAll('.sticky-scene'));
+      const namedScenes = Array.from(document.querySelectorAll('[data-scene-name]'));
+
+      let sceneData = [];
+      let namedTops = [];
+      let worldsMaxShift = 0;
+      let storyTop = 0, storyH = 1, charTop = 0, charH = 1;
+      let mx = 0.5, my = 0.5, lmx = 0.5, lmy = 0.5;
+      let ly = 0, sy = window.scrollY, lVel = 0;
+      let lastNow = 0, running = false, rafId = 0;
+      let lastScene = -1, lastPct = -1;
+
+      /* ── THE MOTE FIELD ─────────────────────────────────────────
+         The ambient depth layer: data-motes at three depths that drift,
+         twinkle, parallax against scroll and lean with the pointer, plus
+         the occasional data-streak falling through. Drawn additively over
+         the scenery on a DPR-capped canvas; skipped for reduced motion
+         and save-data connections. */
+      let motes = [], streaks = [], nextStreak = 0;
+      let W = 0, H = 0;
+      const TONES = ['112,216,235', '165,139,250', '189,200,225'];
+
+      function seedMotes() {
+        const n = W < 768 ? 70 : 140;
+        motes = Array.from({ length: n }, () => ({
+          x: Math.random(), y: Math.random(),
+          z: 0.25 + Math.random() * 0.75,
+          tone: TONES[(Math.random() * TONES.length) | 0],
+          drift: 0.004 + Math.random() * 0.010,
+          tw: Math.random() * Math.PI * 2
+        }));
+      }
+
+      function sizeCanvas() {
+        if (!canvas) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        W = window.innerWidth; H = window.innerHeight;
+        canvas.width = Math.round(W * dpr);
+        canvas.height = Math.round(H * dpr);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        seedMotes();
+      }
+
+      function drawField(now, dt) {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, W, H);
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < motes.length; i++) {
+          const m = motes[i];
+          m.y -= m.drift * m.z * dt * 0.008;
+          if (m.y < -0.02) { m.y = 1.02; m.x = Math.random(); }
+          m.tw += dt * 0.002;
+          const tw = 0.5 + 0.5 * Math.sin(m.tw);
+          const py = (((m.y * H - ly * m.z * 0.10) % H) + H) % H;
+          const px = m.x * W + (lmx - 0.5) * m.z * 54;
+          const s = m.z * (m.z > 0.8 ? 2.6 : 1.8);
+          const a = (0.14 + 0.34 * m.z) * (0.45 + 0.55 * tw);
+          ctx.fillStyle = 'rgba(' + m.tone + ',' + a.toFixed(3) + ')';
+          ctx.fillRect(px - s / 2, py - s / 2, s, s);
+        }
+        if (now > nextStreak && streaks.length < 3) {
+          nextStreak = now + 3500 + Math.random() * 6000;
+          streaks.push({ x: Math.random() * W, y: -60, v: 0.35 + Math.random() * 0.3, life: 0, tone: TONES[(Math.random() * 3) | 0] });
+        }
+        for (let i = streaks.length - 1; i >= 0; i--) {
+          const st = streaks[i];
+          st.y += st.v * dt; st.life += dt;
+          if (st.y > H + 80 || st.life > 2800) { streaks.splice(i, 1); continue; }
+          const fade = clamp(1 - st.life / 2800, 0, 1);
+          const grad = ctx.createLinearGradient(st.x, st.y, st.x + 34, st.y + 120);
+          grad.addColorStop(0, 'rgba(' + st.tone + ',0)');
+          grad.addColorStop(0.5, 'rgba(' + st.tone + ',' + (0.30 * fade).toFixed(3) + ')');
+          grad.addColorStop(1, 'rgba(' + st.tone + ',0)');
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(st.x, st.y);
+          ctx.lineTo(st.x + 34, st.y + 120);
+          ctx.stroke();
+        }
+      }
+
+      function measure() {
+        const y = window.scrollY;
+        const prev = new Map(sceneData.map(s => [s.el, s.inView]));
+        sceneData = sceneEls.map(el => {
+          const rect = el.getBoundingClientRect();
+          return {
+            el,
+            top: rect.top + y,
+            height: rect.height,
+            hold: el.dataset.hold === 'true',
+            bg: el.querySelector('[data-bg]'),
+            fog: el.querySelector('[data-fog]'),
+            content: el.querySelector('[data-content]'),
+            inView: prev.get(el) || false,
+            name: el.dataset.sceneName
+          };
+        });
+        namedTops = namedScenes.map(sec => sec.getBoundingClientRect().top + y);
+        worldsMaxShift = Math.max(0, worldsTrack.scrollWidth - window.innerWidth + 64);
+        storyTop = storySection.getBoundingClientRect().top + y;
+        storyH = storySection.offsetHeight;
+        charTop = charactersSection.getBoundingClientRect().top + y;
+        charH = charactersSection.offsetHeight;
+      }
+
+      /* HUD chrome — scene label, progress, nav bar. Only touches the DOM
+         when a value actually changes, so the rAF loop costs nothing here. */
+      function updateChrome() {
+        const y = window.scrollY;
+        const vh = window.innerHeight;
+        const docH = document.documentElement.scrollHeight - vh;
+        const pr = docH > 0 ? clamp(y / docH, 0, 1) : 0;
+        navProgress.style.transform = 'scaleX(' + pr.toFixed(4) + ')';
+        nav.classList.toggle('scrolled', y > 60);
+        let current = 0;
+        for (let i = 0; i < namedTops.length; i++) {
+          if (y + vh * 0.45 >= namedTops[i]) current = i;
+        }
+        if (current !== lastScene) {
+          lastScene = current;
+          if (hudScene) {
+            hudScene.innerHTML = '<span class="scene-count">SCENE 0' + (current + 1) + ' / 0' + namedScenes.length + '</span> &nbsp;\u00b7&nbsp; ' + namedScenes[current].dataset.sceneName;
+          }
+        }
+        const pct = Math.round(pr * 100);
+        if (pct !== lastPct) {
+          lastPct = pct;
+          if (hudPct) hudPct.textContent = String(pct).padStart(3, '0') + '%';
+        }
+      }
+
+      /* One continuous loop drives everything: ambient motes, the hero
+         dolly, scene parallaxes, velocity skew, cast tilt and the HUD.
+         Scroll and pointer values are lerped here, never in event
+         handlers, so motion stays smooth under bursty input. */
+      function frame(now) {
+        rafId = requestAnimationFrame(frame);
+        const dt = clamp(now - lastNow, 8, 50);
+        lastNow = now;
+        const y = window.scrollY;
+        const vh = window.innerHeight;
+
+        const vel = y - sy; sy = y;
+        lVel = lerp(lVel, vel, 0.14);
+        lmx = lerp(lmx, mx, 0.07);
+        lmy = lerp(lmy, my, 0.07);
+        ly = lerp(ly, y, 0.1);
+        const skew = clamp(lVel * 0.045, -2.6, 2.6);
+
+        if (fieldOn) drawField(now, dt);
+
+        /* HERO — the camera dollies toward the portal: bg pushes down and
+           zooms, the corona widens, the floor grid rolls toward the viewer,
+           and the copy pulls past at its own speed. */
+        if (y < vh * 2) {
+          const p = clamp(y / vh, 0, 1);
+          heroBg.style.transform = 'translate3d(0,' + (y * 0.26).toFixed(1) + 'px,0) scale(' + (1.12 + p * 0.3).toFixed(4) + ')';
+          heroGlow.style.transform = 'translate(-50%,-50%) scale(' + (1 + p * 2.2).toFixed(4) + ')';
+          heroGlow.style.opacity = clamp(0.9 - Math.abs(p - 0.35) * 1.6, 0, 1).toFixed(3);
+          heroFloor.style.transform = 'rotateX(64deg) translate3d(0,' + ((y * 0.35 + now * 0.010) % 46).toFixed(1) + 'px,0)';
+          heroContent.style.transform = 'translate3d(0,' + (y * 0.52).toFixed(1) + 'px,0)';
+          heroContent.style.opacity = clamp(1 - y / (vh * 0.72), 0, 1).toFixed(3);
+          heroHud.style.opacity = clamp(1 - y / (vh * 0.3), 0, 1).toFixed(3);
+          if (finePointer) {
+            floats.forEach(f => {
+              const d = parseFloat(f.dataset.depth);
+              const m = parseFloat(f.dataset.mouse);
+              f.style.transform = 'translate3d(' + ((lmx - 0.5) * m * 300).toFixed(1) + 'px,' + (y * d + (lmy - 0.5) * m * 300).toFixed(1) + 'px,0) scale(' + (1 + p * 0.22).toFixed(3) + ')';
+            });
+          }
+        }
+
+        /* STICKY SCENES — the background dollies in while the fog plane and
+           content counter-move, and scroll velocity shears the content so
+           fast flicks feel physical. Only in-view scenes are touched. */
+        sceneData.forEach(s => {
+          if (!s.inView) return;
+          const raw = (y - s.top) / Math.max(1, s.height - vh);
+          const p = clamp(raw, 0, 1);
+          if (s.bg) s.bg.style.transform = 'translate3d(0,' + ((p - 0.5) * vh * 0.14).toFixed(1) + 'px,0) scale(' + (1.06 + p * 0.22).toFixed(4) + ')';
+          if (s.fog) s.fog.style.transform = 'translate3d(0,' + ((0.5 - p) * vh * 0.10).toFixed(1) + 'px,0)';
+          if (s.content) {
+            s.content.style.transform = 'translate3d(0,' + ((0.5 - p) * vh * 0.08).toFixed(1) + 'px,0) skewY(' + skew.toFixed(2) + 'deg)';
+            const fadeIn = clamp((raw + 0.45) / 0.45, 0, 1);
+            const fadeOut = s.hold ? 1 : clamp((1.45 - raw) / 0.45, 0, 1);
+            s.content.style.opacity = Math.min(fadeIn, fadeOut).toFixed(3);
+          }
+          if (s.el.id === 'worlds') {
+            worldsTrack.style.transform = 'translate3d(' + (-p * worldsMaxShift).toFixed(1) + 'px,0,0) skewY(' + (skew * 0.6).toFixed(2) + 'deg)';
+            worldDepths.forEach((wd, i) => {
+              const bob = Math.sin(p * Math.PI) * (i % 2 ? -20 : 20);
+              const drift = (0.5 - p) * (i % 2 ? -26 : 26);
+              wd.style.transform = 'translate3d(' + drift.toFixed(1) + 'px,' + bob.toFixed(1) + 'px,0)';
+            });
+          }
+        });
+
+        if (y + vh > charTop && y < charTop + charH) {
+          const cp = clamp((vh + y - charTop) / (vh + charH), 0, 1);
+          charactersBg.style.transform = 'translate3d(0,' + ((cp - 0.5) * 120).toFixed(1) + 'px,0)';
+        }
+        if (y + vh > storyTop && y < storyTop + storyH) {
+          const sp = clamp((vh + y - storyTop) / (vh + storyH), 0, 1);
+          storyBg.style.transform = 'translate3d(0,' + ((sp - 0.5) * storyH * 0.18).toFixed(1) + 'px,0) scale(1.15)';
+          storyShot.style.transform = 'translate3d(0,' + ((sp - 0.5) * -46).toFixed(1) + 'px,0)';
+        }
+
+        /* CAST — lerped 3D tilt toward the pointer. */
+        tiltState.forEach(st => {
+          if (!st.on) return;
+          st.rx = lerp(st.rx, st.tRx, 0.12);
+          st.ry = lerp(st.ry, st.tRy, 0.12);
+          st.dy = lerp(st.dy, st.tDy, 0.12);
+          const mag = Math.abs(st.rx) + Math.abs(st.ry) + Math.abs(st.dy);
+          if (mag > 0.05) {
+            st.card.style.transform = 'perspective(700px) rotateX(' + st.rx.toFixed(2) + 'deg) rotateY(' + st.ry.toFixed(2) + 'deg) translateY(' + st.dy.toFixed(2) + 'px)';
+          } else if (st.card.style.transform) {
+            st.card.style.transform = '';
+          }
+          if (st.glare) {
+            st.glare.style.setProperty('--gx', st.gx.toFixed(1) + '%');
+            st.glare.style.setProperty('--gy', st.gy.toFixed(1) + '%');
+          }
+        });
+
+        updateChrome();
+      }
+
+      window.addEventListener('scroll', () => { if (reduced) updateChrome(); }, { passive: true });
+      window.addEventListener('resize', () => { if (fieldOn) sizeCanvas(); measure(); updateChrome(); });
+
+      if (finePointer && !reduced) {
+        document.addEventListener('mousemove', e => {
+          mx = e.clientX / window.innerWidth;
+          my = e.clientY / window.innerHeight;
+        }, { passive: true });
+      }
+
+      /* CAST TILT — armed only after the reveal transition has finished, so
+         an inline transform can never freeze a card mid-rise. */
+      const tiltState = new Map();
+      document.querySelectorAll('.character-card').forEach(card => {
+        const glare = card.querySelector('.glare');
+        const st = { card, glare, rx: 0, ry: 0, dy: 0, tRx: 0, tRy: 0, tDy: 0, gx: 50, gy: 50, on: false };
+        tiltState.set(card, st);
+        card.addEventListener('transitionend', function arm(ev) {
+          if (ev.propertyName !== 'transform') return;
+          card.removeEventListener('transitionend', arm);
+          st.on = true;
+          card.style.transition = 'border-color 0.4s, box-shadow 0.4s';
+        });
+        if (finePointer && !reduced) {
+          card.addEventListener('pointermove', e => {
+            if (!st.on) return;
+            const r = card.getBoundingClientRect();
+            const px = (e.clientX - r.left) / r.width;
+            const py = (e.clientY - r.top) / r.height;
+            st.tRy = (px - 0.5) * 11;
+            st.tRx = (0.5 - py) * 9;
+            st.tDy = -7;
+            st.gx = px * 100;
+            st.gy = py * 100;
+          });
+          card.addEventListener('pointerleave', () => {
+            st.tRx = 0; st.tRy = 0; st.tDy = 0;
+          });
+        }
+      });
+
+      /* MAGNETIC CTAs — the pull rides the `translate` property so it never
+         touches each button's own transform or hover transition. */
+      if (finePointer && !reduced) {
+        document.querySelectorAll('.btn, .nav-cta').forEach(el => {
+          el.addEventListener('pointermove', e => {
+            const r = el.getBoundingClientRect();
+            const dx = (e.clientX - (r.left + r.width / 2)) / Math.max(1, r.width);
+            const dy = (e.clientY - (r.top + r.height / 2)) / Math.max(1, r.height);
+            el.style.translate = (dx * 9).toFixed(1) + 'px ' + (dy * 7).toFixed(1) + 'px';
+          });
+          el.addEventListener('pointerleave', () => { el.style.translate = ''; });
+        });
+      }
+
+      /* DECODE — heading text resolves out of glyph noise, left to right,
+         then the exact original string is restored. The scramble only
+         mutates text nodes, so <br> line breaks survive. */
+      const GLYPHS = 'ABCDEFGHKMNPRSTUVXYZ0123456789<>/=*+#%';
+      function decode(rootEl) {
+        if (!rootEl || rootEl.dataset.decoded) return;
+        rootEl.dataset.decoded = '1';
+        const nodes = [];
+        (function collect(n) {
+          Array.prototype.forEach.call(n.childNodes, c => {
+            if (c.nodeType === 3 && c.nodeValue.trim()) nodes.push(c);
+            else if (c.nodeType === 1) collect(c);
+          });
+        })(rootEl);
+        if (!nodes.length) return;
+        const originals = nodes.map(n => n.nodeValue);
+        const total = originals.join('').replace(/\s/g, '').length;
+        const frames = Math.max(14, Math.round(total * 0.9));
+        rootEl.setAttribute('aria-label', rootEl.textContent);
+        let f = 0;
+        (function step() {
+          f++;
+          const done = f >= frames;
+          let consumed = 0;
+          nodes.forEach((node, ni) => {
+            node.nodeValue = Array.from(originals[ni]).map(c => {
+              if (!c.trim()) return c;
+              const idx = consumed++;
+              const settle = (idx / total) * frames * 0.72;
+              if (done || f > settle + 3) return c;
+              return GLYPHS[(Math.random() * GLYPHS.length) | 0];
+            }).join('');
+          });
+          if (done) {
+            nodes.forEach((node, ni) => { node.nodeValue = originals[ni]; });
+            rootEl.removeAttribute('aria-label');
+            return;
+          }
+          requestAnimationFrame(step);
+        })();
+      }
+
+      if ('IntersectionObserver' in window) {
+        /* Entrances: .active lands when a scene's stage is 30% in view and
+           lifts again below 2% (effectively offscreen), so scrolling back
+           replays the staged entrances while exits never snap. */
+        const stickyChildren = document.querySelectorAll('.sticky-child');
+        const activeAdd = new IntersectionObserver(entries => {
+          entries.forEach(en => {
+            if (!en.isIntersecting) return;
+            const c = en.target.querySelector('[data-content]');
+            if (c) {
+              c.classList.add('active');
+              if (!reduced) decode(c.querySelector('h2'));
+            }
+          });
+        }, { threshold: 0.3 });
+        const activeRemove = new IntersectionObserver(entries => {
+          entries.forEach(en => {
+            if (en.isIntersecting) return;
+            const c = en.target.querySelector('[data-content]');
+            if (c) c.classList.remove('active');
+          });
+        }, { threshold: 0.02 });
+        stickyChildren.forEach(el => { activeAdd.observe(el); activeRemove.observe(el); });
+
+        /* Perf gate: parallax math only runs for scenes near the viewport. */
+        const viewIO = new IntersectionObserver(entries => {
+          entries.forEach(en => {
+            const s = sceneData.find(sd => sd.el === en.target);
+            if (s) s.inView = en.isIntersecting;
+          });
+        }, { rootMargin: '20% 0px' });
+        sceneEls.forEach(el => viewIO.observe(el));
+
+        const io = new IntersectionObserver(entries => {
+          entries.forEach(en => {
+            if (en.isIntersecting) {
+              en.target.classList.add('revealed');
+              if (!reduced) decode(en.target.querySelector('h2'));
+              io.unobserve(en.target);
+            }
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('[data-reveal]').forEach((el, i) => {
+          el.style.transitionDelay = (i % 6) * 70 + 'ms';
+          io.observe(el);
+        });
+      } else {
+        document.querySelectorAll('[data-reveal]').forEach(el => el.classList.add('revealed'));
+      }
+
+      function startLoop() {
+        if (running || reduced) return;
+        running = true;
+        lastNow = performance.now();
+        rafId = requestAnimationFrame(frame);
+      }
+      function stopLoop() {
+        if (!running) return;
+        running = false;
+        cancelAnimationFrame(rafId);
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopLoop(); else startLoop();
+      });
+
+      document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', e => {
+          const href = a.getAttribute('href');
+          if (href.length < 2) return;
+          const target = document.querySelector(href);
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      function markLoaded() { document.body.classList.add('loaded'); }
+      window.addEventListener('load', markLoaded);
+      setTimeout(markLoaded, 1600);
+
+      if (fieldOn) sizeCanvas();
+      measure();
+      updateChrome();
+      startLoop();
+      window.__pgUpdate = function () { measure(); updateChrome(); };
+    })();
+  </script>
+</body>
+</html>

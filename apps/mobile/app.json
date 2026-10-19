@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "PunkGrid",
+    "slug": "punkgrid",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "punkgrid",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0D1223",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0D1223",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "softwareKeyboardLayoutMode": "resize",
+      "predictiveBackGestureEnabled": false,
+      "package": "com.monrad.punkgrid"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font"
+    ]
+  }
+}
