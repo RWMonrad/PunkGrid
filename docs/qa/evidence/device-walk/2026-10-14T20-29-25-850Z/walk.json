@@ -1,0 +1,11 @@
+{
+  "stamp": "2026-10-14T20-29-25-850Z",
+  "fontScale": "1.0",
+  "baseUrl": "http://127.0.0.1:3113",
+  "apkSha256": "f9385bb87de509da56f1dfa3715dced15c8acb16fe970ff26176c4f00ee0a43f",
+  "serial": "emulator-5554",
+  "strict": true,
+  "checks": 136,
+  "passed": 136,
+  "failures": []
+}

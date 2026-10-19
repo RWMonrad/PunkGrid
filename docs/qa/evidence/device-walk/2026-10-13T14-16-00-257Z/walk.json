@@ -1,0 +1,14 @@
+{
+  "stamp": "2026-10-13T14-16-00-257Z",
+  "fontScale": "",
+  "baseUrl": "http://10.0.2.2:3100",
+  "checks": 124,
+  "passed": 123,
+  "failures": [
+    {
+      "screen": "UI02 genesis",
+      "what": "the seam above the two doors is painted, not a flat plate",
+      "saw": "1 distinct colours in x=134..1210 y=454..455 (between “Two ways in. Both end in the same kind of world: bounded rules, stored choices, fictional people.” (y2=430) and “One button. Surprise Me. The engine chooses era, place and role, and writes the first scene.” (y1=478))"
+    }
+  ]
+}

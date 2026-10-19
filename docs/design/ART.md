@@ -94,7 +94,7 @@ spørsmålet skjermen egentlig stiller — hva er det livet kan foregå i. Regle
 holder fortsatt: teksten står under bildet, aldri over det, og platene er
 `accessibilityElementsHidden`, så de dukker ikke opp i lesetreet. Målt på
 enheten 2026-10-13 (`docs/qa/evidence/device-walk/2026-10-13T00-50-32-386Z/UI01
-welcome.png`): fire plater med de fire navnene, og lesetreet sier 16 merkede
+welcome.xml`): fire plater med de fire navnene, og lesetreet sier 16 merkede
 noder i den rekkefølgen geometrien gir. Ved 200 % tekst blir rekka to rader —
 tre plater foran og Mars bak, med hel label på alle fire og uten ett eneste
 klippet tegn — og gangen måler 117/117 på samme skjerm
@@ -114,7 +114,7 @@ undertittelen lyder `24 committed scenes in The Glass Harbor`. Verdenslesinga er
 skilt fra lesinga av listen med vilje: svikter verdensvisningen, blir skjermen
 den tekstlige layouten den alltid har vært, mens en feil i selve historikken
 får beholde feilpanelet sitt. Målt på enheten 2026-10-13
-(`docs/qa/evidence/device-walk/2026-10-13T01-38-52-076Z/UI09 history.png`):
+(`docs/qa/evidence/device-walk/2026-10-13T01-38-52-076Z/UI09 history.xml`):
 båndet er der, treet har 18 merkede noder i geometrisk rekkefølge, ti klikkbare
 noder har alle navn og er minst 44 dp, og gangen måler 112/112.
 
@@ -382,8 +382,9 @@ dp-plate — 288 px — var det samme ansiktet to ganger. Det er ikke en smakssa
 castet *er* informasjonen på skjermen, og to personer som leses som én
 person gir en falskere setning enn en rekke uten bilder. De to motivene ble
 derfor skrevet om med alder, kroppsbygning, hår og antrekk som ikke kan
-forveksles, og første utgave ligger igjen i `.scratch/` som
-`cast-*-v1.png` sammen med montasjen de ble vurdert i.
+forveksles, og første utgave ligger igjen i `.scratch/` som `cast-*-v1.png`,
+sammen med montasjen de ble vurdert i; den mappa er lokalt arbeid og står ikke
+i git.
 
 ## Bevegelse — det jeg ikke kan generere
 

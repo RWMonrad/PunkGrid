@@ -1,0 +1,22 @@
+{
+  "stamp": "2026-10-14T19-50-43-951Z",
+  "fontScale": "2.0",
+  "baseUrl": "http://127.0.0.1:3113",
+  "apkSha256": "f9385bb87de509da56f1dfa3715dced15c8acb16fe970ff26176c4f00ee0a43f",
+  "serial": "emulator-5554",
+  "strict": true,
+  "checks": 135,
+  "passed": 133,
+  "failures": [
+    {
+      "screen": "UI04 world",
+      "what": "the hero under the console strip is painted, not a flat plate",
+      "saw": "the nodes that bracket it are not on the screen"
+    },
+    {
+      "screen": "UI09 history",
+      "what": "every row says it is published and names its version",
+      "saw": "11 status lines for 12 rows"
+    }
+  ]
+}

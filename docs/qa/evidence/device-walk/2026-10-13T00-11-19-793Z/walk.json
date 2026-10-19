@@ -1,0 +1,14 @@
+{
+  "stamp": "2026-10-13T00-11-19-793Z",
+  "fontScale": "",
+  "baseUrl": "http://10.0.2.2:3100",
+  "checks": 112,
+  "passed": 111,
+  "failures": [
+    {
+      "screen": "UI04 world",
+      "what": "the door reached on the scroll is at least 44 dp (132 px) on its short side",
+      "saw": "1248x116"
+    }
+  ]
+}

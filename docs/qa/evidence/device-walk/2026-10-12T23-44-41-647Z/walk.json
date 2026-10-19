@@ -1,0 +1,14 @@
+{
+  "stamp": "2026-10-12T23-44-41-647Z",
+  "fontScale": "",
+  "baseUrl": "http://10.0.2.2:3100",
+  "checks": 112,
+  "passed": 111,
+  "failures": [
+    {
+      "screen": "UI04 world actions",
+      "what": "every clickable node is at least 44 dp (132 px) on its short side",
+      "saw": "8 measured, 2 outside the viewport, 1 put through the scroll proof: Choice A of 3. Confront Mara. You put the offer on the table between you and ask her to look at it. 1248x116, at best 116 after scrolling"
+    }
+  ]
+}

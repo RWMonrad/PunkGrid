@@ -1,0 +1,8 @@
+{
+  "stamp": "2026-10-13T04-00-41-390Z",
+  "fontScale": "2.0",
+  "baseUrl": "http://10.0.2.2:3100",
+  "checks": 128,
+  "passed": 128,
+  "failures": []
+}

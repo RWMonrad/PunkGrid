@@ -1,0 +1,103 @@
+[
+  {
+    "name": "01-created",
+    "state": {
+      "held": false,
+      "dropNext": false,
+      "requests": [
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/v1/worlds",
+          "status": 202,
+          "commandId": "cmd_mv8fzf1076ek1t",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8fzf1076ek1t",
+            "mode": "surprise"
+          }
+        }
+      ],
+      "worlds": [
+        {
+          "id": "world_E3D2CQA62G0001",
+          "status": "active",
+          "version": 1,
+          "replay": true
+        }
+      ],
+      "episodes": [
+        {
+          "id": "ep_AYVDDQD4A20005",
+          "version": 1,
+          "status": "published"
+        }
+      ]
+    }
+  },
+  {
+    "name": "failure",
+    "state": {
+      "held": true,
+      "dropNext": false,
+      "requests": [
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/v1/worlds",
+          "status": 202,
+          "commandId": "cmd_mv8fzf1076ek1t",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8fzf1076ek1t",
+            "mode": "surprise"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_E3D2CQA62G0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8g0m5fd16qb8",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8g0m5fd16qb8",
+            "actorIdentityId": "idn_3EDYA73ST00002",
+            "expectedWorldVersion": 1,
+            "choiceId": "brief_staff"
+          }
+        }
+      ],
+      "worlds": [
+        {
+          "id": "world_E3D2CQA62G0001",
+          "status": "active",
+          "version": 2,
+          "replay": true
+        }
+      ],
+      "episodes": [
+        {
+          "id": "ep_AYVDDQD4A20005",
+          "version": 1,
+          "status": "published"
+        },
+        {
+          "id": "ep_TP3WGQGFZF000C",
+          "version": 2,
+          "status": "pending"
+        }
+      ]
+    }
+  }
+]

@@ -5,3 +5,17 @@ coverage/
 .env.*
 *.log
 .DS_Store
+
+# Lokalt arbeid: midlertidige målinger, generert kunst og utskrift av bygg.
+/.scratch/
+/vibe_images/
+/apps/mobile/.scratch-contrast.txt
+
+# Enhetsgangen skriver ett skjermbilde for hvert XML-tre. Treet og stempeldata
+# er beviset som hører hjemme i historikken; bildene ligger bare på maskinen
+# som målte.
+docs/qa/evidence/**/*.png
+# Unntak: to mapper der skjermbildet er hele beviset, uten noe tre å lese samme
+# påstand ut av.
+!docs/qa/evidence/2026-10-12-emulator/*.png
+!docs/qa/evidence/postgres-2026-10-12/*.png

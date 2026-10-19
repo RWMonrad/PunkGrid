@@ -61,8 +61,10 @@ Hele første valgkort er synlig ved 100 %, prosa begynner over folden ved 200 %,
 og navigasjon til valgt verden er verifisert. Samlet native feiltest **bestod** på
 samme APK mot isolert minnelager: pending, tapt kvittering, samme-kommando-retry
 uten dobbel commit, pause/resume/archive og lesbar arkivert historikk. Bevis:
-`.scratch/ui-fault-evidence/ui-fault-2026-10-14T21-08-12-195Z/` — 11 ferske
-skjermtrær med bilder, tre publiserte episoder ved versjon 3 og korrekt replay.
+`docs/qa/evidence/ui-fault/2026-10-14T21-08-12-195Z/` — 11 ferske skjermtrær
+pluss `result.json`, tre publiserte episoder ved versjon 3 og korrekt replay.
+Skjermbildene gangen tok, ligger igjen på maskinen som målte; det er XML-filene
+og `result.json` som står i historikken.
 Kontoen er utlogget med opprinnelig serveradresse på 3113; fontskala og
 animasjonsskala er kontrollert tilbakeført til 1.0. Feiltesten brukte redusert
 bevegelse og bekrefter ikke ekte TalkBack, iOS, ARM64-maskinvare eller full

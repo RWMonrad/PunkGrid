@@ -1,0 +1,19 @@
+PunkGrid API on http://0.0.0.0:3120
+  canon: in-memory (single process)
+  narration: deterministic fake provider (PUNKGRID_AI_BASE_URL, PUNKGRID_AI_API_KEY, PUNKGRID_AI_MODEL not set — no gateway calls, no spend)
+  sign-in: dev tokens for user_demo
+  address bucket: socket peer; account bucket: this process only
+POST /v1/worlds -> 201 
+GET  /v1/worlds/{id} -> 200 worldTime=1888-09-15T09:00:00.000Z version=1
+  offers: 4 [brief_staff, confront_mara, investigate_buyer, open_negotiation]
+GET  episode -> 200 status=published prose=256 chars allowed=["brief_staff","confront_mara","investigate_buyer","open_negotiation"]
+POST unissued reject_sale -> 422 RULE_PRECONDITION_FAILED/CHOICE_NOT_OFFERED
+  turn 1: brief_staff -> 200 /, scene had 4 offers
+  turn 2: brief_staff -> 200 /, scene had 4 offers
+  turn 3: brief_staff -> 200 /, scene had 4 offers
+  turn 4: brief_staff -> 200 /, scene had 4 offers
+  turn 5: brief_staff -> 200 /, scene had 4 offers
+  turn 6: brief_staff -> 200 /, scene had 4 offers
+offers per turn: 4, 4, 4, 4, 4, 4, 4
+last version read: 6
+OK: ADR-022 and ADR-023 hold over HTTP.

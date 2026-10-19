@@ -1,0 +1,44 @@
+{
+  "BASE_URL": "http://10.0.2.2:3120",
+  "ERA": "1888",
+  "ROLE": "Investigator",
+  "count": 4,
+  "meta": " The Glass Harbor, Active, Version 1 · world time 1888-09-15, RESUME LIFE, ▸",
+  "results": [
+    {
+      "name": "UI10 holder den isolerte tjeneradressen",
+      "ok": true,
+      "detail": "feltet: “http://10.0.2.2:3120”"
+    },
+    {
+      "name": "UI03 sier referanserollen på «you»-plateen før valget (Founder / CEO)",
+      "ok": true,
+      "detail": "platen sier: “Founder / CEO”"
+    },
+    {
+      "name": "UI03 har en tidskipp for 1888",
+      "ok": true,
+      "detail": "1888"
+    },
+    {
+      "name": "UI03 har en rollekipp for Investigator",
+      "ok": true,
+      "detail": "Investigator"
+    },
+    {
+      "name": "UI03 bytter «you»-plateen til Investigator",
+      "ok": true,
+      "detail": "platen sier: “Investigator”"
+    },
+    {
+      "name": "ADR-022: scenen på enheten tilbyr 4 valg (2–4)",
+      "ok": true,
+      "detail": "Brief staff, Confront Mara, Investigate the buyer, Open negotiation"
+    },
+    {
+      "name": "ADR-023: kortet på enheten viser world time 1888-09-15",
+      "ok": true,
+      "detail": "The Glass Harbor, Active, Version 1 · world time 1888-09-15, RESUME LIFE, ▸"
+    }
+  ]
+}

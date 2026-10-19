@@ -1,0 +1,110 @@
+Verified isolated punkgrid_test; no other sessions. Starting complete suite.
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/Rune W. Monrad/CascadeProjects/PunkGrid[39m
+
+ [32m✓[39m apps/mobile/scripts/reading-order.test.mjs [2m([22m[2m29 tests[22m[2m)[22m[90m 37[2mms[22m[39m
+ [32m✓[39m apps/mobile/src/lib/config.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 3[2mms[22m[39m
+ [32m✓[39m apps/mobile/src/lib/preview.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 5[2mms[22m[39m
+ [32m✓[39m apps/mobile/src/lib/telemetry.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 5[2mms[22m[39m
+ [32m✓[39m apps/mobile/src/lib/setting.test.ts [2m([22m[2m10 tests[22m[2m)[22m[90m 7[2mms[22m[39m
+ [32m✓[39m apps/mobile/src/lib/api.test.ts [2m([22m[2m16 tests[22m[2m)[22m[90m 35[2mms[22m[39m
+ [32m✓[39m apps/mobile/src/lib/session.test.ts [2m([22m[2m12 tests[22m[2m)[22m[90m 10[2mms[22m[39m
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mthe page the pairs are anchored to[2m > [22m[2mthe backdrop never paints a plate brighter than the page colour text is measured on
+[22m[39m  12 plates sjekket — svakste tekstforhold 17.40:1
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mSC 1.4.3 — text contrast[2m > [22m[2mevery text pair the app paints reaches its AA ratio
+[22m[39m  115 textpar målt — svakste: 5.82 (components/cards.tsx · episodeKicker (episode kicker in a history row)), 5.82 (app/preview.tsx · kicker (preview scene line)), 6.80 (components/Button.tsx · labelOnAccent (primary label)), 6.80 (components/cards.tsx · episodeKicker (episode kicker on the page)), 6.80 (components/cards.tsx · letterText (choice letter on the violet chip))
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mSC 1.4.3 — text contrast[2m > [22m[2mthe press state still clears AA while it is held
+[22m[39m  primary pressed: 5.23 mot 4.5
+  accent pressed: 9.77 mot 4.5
+  secondary pressed: 9.43 mot 4.5
+  choice pressed: 9.43 mot 4.5
+  door blurb pressed: 6.15 mot 4.5
+  door kicker pressed: 7.26 mot 4.5
+  world state pressed: 6.52 mot 4.5
+  submit pressed: 5.28 mot 4.5
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mSC 1.4.3 — text contrast[2m > [22m[2mmeasures the disabled state without asserting on it
+[22m[39m  disabled tekst over #0D1223: 4.29 (unntatt — inaktiv kontroll)
+  disabled tekst over #18213A: 4.10 (unntatt — inaktiv kontroll)
+  disabled tekst over #A58BFA: 1.57 (unntatt — inaktiv kontroll)
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mSC 1.4.11 — the boundary that identifies a control[2m > [22m[2mevery border in the app clears 3:1 against both page backgrounds
+[22m[39m  41 kanter målt — svakste: line 3.59 (app/account.tsx:160), line 3.59 (history/[worldId].tsx:138), line 3.59 (app/preview.tsx:89), line 3.59 (app/setup.tsx:260), line 3.59 (app/setup.tsx:265), line 3.59 (app/sign-in.tsx:74)
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mSC 1.4.11 — the boundary that identifies a control[2m > [22m[2mselection indicators clear 3:1 as non-text content
+[22m[39m  components/ReportSheet.tsx · radio (unselected radio): 9.50 mot 3
+  components/ReportSheet.tsx · radioOn (selected radio): 5.82 mot 3
+  app/setup.tsx · chipOn (selected chip outline): 5.82 mot 3
+  app/index.tsx · gate (gate bar): 5.82 mot 3
+  app/index.tsx · gateStill (still gate bar): 11.39 mot 3
+  components/kit.tsx · staticBar (static progress bar): 11.39 mot 3
+  components/kit.tsx · disclosure (fiction mark on the disclosure): 5.82 mot 3
+  app/preview.tsx · upgrade (fiction mark on the preview receipt): 11.39 mot 3
+  components/nav.tsx · tabOn (lit tab top edge): 14.13 mot 3
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mSC 1.4.11 — the boundary that identifies a control[2m > [22m[2mthe breathing dot is still there at the bottom of its breath
+[22m[39m  pustende dot på #0D1223 ved 0.55: 4.29 mot 3
+  pustende dot på #18213A ved 0.55: 4.04 mot 3
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mNFR-07 — control semantics in the sources[2m > [22m[2mevery Pressable says what kind of control it is
+[22m[39m  17 Pressableelement sjekket
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mNFR-07 — control semantics in the sources[2m > [22m[2mevery control draws its own focus indicator (SC 2.4.7)
+[22m[39m  20 kontroller målt for fokusring
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mNFR-07 — control semantics in the sources[2m > [22m[2mthe focus ring clears 3:1 on every surface a control can sit on
+[22m[39m  fokusring mot #0D1223: 13.31
+  fokusring mot #18213A: 11.39
+  fokusring mot #24314E: 9.24
+
+[90mstdout[2m | apps/mobile/src/lib/contrast.test.ts[2m > [22m[2mSC 1.4.4 — text at 200 %[2m > [22m[2mevery Text in the app says how it scales
+[22m[39m  98 Textelementer sjekket for maksmultiplikator
+
+ [32m✓[39m apps/mobile/src/lib/contrast.test.ts [2m([22m[2m18 tests[22m[2m)[22m[90m 30[2mms[22m[39m
+ [32m✓[39m core/tests/api.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 32[2mms[22m[39m
+ [32m✓[39m core/tests/moderation.test.ts [2m([22m[2m23 tests[22m[2m)[22m[90m 30[2mms[22m[39m
+ [32m✓[39m core/tests/worker.test.ts [2m([22m[2m8 tests[22m[2m)[22m[90m 57[2mms[22m[39m
+ [32m✓[39m core/tests/golden.test.ts [2m([22m[2m38 tests[22m[2m)[22m[90m 88[2mms[22m[39m
+ [32m✓[39m core/tests/ai.test.ts [2m([22m[2m15 tests[22m[2m)[22m[90m 272[2mms[22m[39m
+[90mstdout[2m | core/tests/e2e.test.ts[2m > [22m[2mE2E — one player, one world, the whole route list[2m > [22m[2mkeeps every response traceable and answers the whole journey inside NFR-01
+[22m[39me2e latency (local, single process, n=31 GET): p50=0.6ms p95=2.8ms max=11.3ms over 50 requests
+
+[90mstdout[2m | core/tests/e2e.test.ts[2m > [22m[2mE2E — one player, one world, the whole route list[2m > [22m[2msettles the first scene inside the NFR-02 window
+[22m[39me2e first scene (local, inline narration): 3.1ms
+
+ [32m✓[39m core/tests/e2e.test.ts [2m([22m[2m14 tests[22m[2m)[22m[90m 97[2mms[22m[39m
+ [32m✓[39m core/tests/server.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 105[2mms[22m[39m
+ [32m✓[39m core/tests/security.test.ts [2m([22m[2m16 tests[22m[2m)[22m[90m 170[2mms[22m[39m
+ [32m✓[39m apps/mobile/src/lib/play.test.ts [2m([22m[2m56 tests[22m[2m)[22m[33m 543[2mms[22m[39m
+ [32m✓[39m apps/mobile/scripts/art-check.test.mjs [2m([22m[2m18 tests[22m[2m)[22m[33m 835[2mms[22m[39m
+[90mstdout[2m | core/tests/pg.test.ts[2m > [22m[2mPostgres unit of work[2m > [22m[2mover HTTP with the outbox worker[2m > [22m[2manswers reads inside NFR-01 with the queue and the shared bucket on the path
+[22m[39mdeployed-shape reads (Postgres + worker + shared bucket, n=30 GET): p50=9.8ms p95=11.5ms max=12.5ms
+
+[90mstdout[2m | core/tests/pg.test.ts[2m > [22m[2mPostgres unit of work[2m > [22m[2mover HTTP with the outbox worker[2m > [22m[2msettles the first episode inside the NFR-02 window through the queue
+[22m[39mfirst episode commit→published (queue + worker loop, local CompliantProvider): 0.06s
+
+[90mstdout[2m | core/tests/pg.test.ts[2m > [22m[2mPostgres unit of work[2m > [22m[2mshared rate limit[2m > [22m[2mgives two processes one allowance
+[22m[39mshared bucket take (local Postgres, n=10): p50=1.12ms max=9.88ms
+
+ [32m✓[39m core/tests/pg.test.ts [2m([22m[2m27 tests[22m[2m)[22m[33m 10304[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mreplays the Glass Harbor opening to the golden hash through Postgres [33m626[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mreturns the stored result for a replayed command after a reload [33m646[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mrejects a stale expected version after reloading the aggregate [33m560[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mrefuses to overwrite published prose [33m543[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mpersists the derived projections so SQL agrees with the snapshot [33m449[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mkeeps every world-bound row inside its own world [33m778[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mrefuses a world id another process already claimed [33m430[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mserialises two writers of the same world [33m683[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mwrites a report case to the database and reads it back after a reload [33m573[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mover HTTP with the outbox worker[2m > [22mcommits with the episode pending and lets the worker publish it [33m476[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mover HTTP with the outbox worker[2m > [22manswers reads inside NFR-01 with the queue and the shared bucket on the path [33m490[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22mover HTTP with the outbox worker[2m > [22msettles the first episode inside the NFR-02 window through the queue [33m743[2mms[22m[39m
+   [33m[2m✓[22m[39m Postgres unit of work[2m > [22msecurity negatives as the deployed roles[2m > [22mkeeps the daily USD budget per account and across a process restart [33m443[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+[2m      Tests [22m [1m[32m345 passed[39m[22m[90m (345)[39m
+[2m   Start at [22m 22:59:27
+[2m   Duration [22m 11.41s[2m (transform 2.25s, setup 0ms, collect 7.21s, tests 12.67s, environment 3ms, prepare 2.49s)[22m
+

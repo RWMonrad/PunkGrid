@@ -1,0 +1,407 @@
+[
+  {
+    "name": "01-created",
+    "uiRead": true,
+    "state": {
+      "held": false,
+      "dropNext": false,
+      "requests": [
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/v1/worlds",
+          "status": 202,
+          "commandId": "cmd_mv8h66xrqr2lc1",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h66xrqr2lc1",
+            "mode": "surprise"
+          }
+        }
+      ],
+      "worlds": [
+        {
+          "id": "world_0EG47SAH1B0001",
+          "status": "active",
+          "version": 1,
+          "replay": true
+        }
+      ],
+      "episodes": [
+        {
+          "id": "ep_HWJ7G79AZH0005",
+          "version": 1,
+          "status": "published"
+        }
+      ]
+    }
+  },
+  {
+    "name": "02-pending",
+    "uiRead": true,
+    "state": {
+      "held": true,
+      "dropNext": false,
+      "requests": [
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/v1/worlds",
+          "status": 202,
+          "commandId": "cmd_mv8h66xrqr2lc1",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h66xrqr2lc1",
+            "mode": "surprise"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h6uw30rooor",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h6uw30rooor",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 1,
+            "choiceId": "brief_staff"
+          }
+        }
+      ],
+      "worlds": [
+        {
+          "id": "world_0EG47SAH1B0001",
+          "status": "active",
+          "version": 2,
+          "replay": true
+        }
+      ],
+      "episodes": [
+        {
+          "id": "ep_HWJ7G79AZH0005",
+          "version": 1,
+          "status": "published"
+        },
+        {
+          "id": "ep_R382A2K1KS000C",
+          "version": 2,
+          "status": "pending"
+        }
+      ]
+    }
+  },
+  {
+    "name": "03-published-after-release",
+    "uiRead": true,
+    "state": {
+      "held": false,
+      "dropNext": false,
+      "requests": [
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/v1/worlds",
+          "status": 202,
+          "commandId": "cmd_mv8h66xrqr2lc1",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h66xrqr2lc1",
+            "mode": "surprise"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h6uw30rooor",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h6uw30rooor",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 1,
+            "choiceId": "brief_staff"
+          }
+        }
+      ],
+      "worlds": [
+        {
+          "id": "world_0EG47SAH1B0001",
+          "status": "active",
+          "version": 2,
+          "replay": true
+        }
+      ],
+      "episodes": [
+        {
+          "id": "ep_HWJ7G79AZH0005",
+          "version": 1,
+          "status": "published"
+        },
+        {
+          "id": "ep_R382A2K1KS000C",
+          "version": 2,
+          "status": "published"
+        }
+      ]
+    }
+  },
+  {
+    "name": "04-dropped-acknowledgement",
+    "uiRead": true,
+    "state": {
+      "held": false,
+      "dropNext": true,
+      "requests": [
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/v1/worlds",
+          "status": 202,
+          "commandId": "cmd_mv8h66xrqr2lc1",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h66xrqr2lc1",
+            "mode": "surprise"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h6uw30rooor",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h6uw30rooor",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 1,
+            "choiceId": "brief_staff"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h86lr3cmao9",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h86lr3cmao9",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 2,
+            "choiceId": "brief_staff"
+          }
+        }
+      ],
+      "worlds": [
+        {
+          "id": "world_0EG47SAH1B0001",
+          "status": "active",
+          "version": 3,
+          "replay": true
+        }
+      ],
+      "episodes": [
+        {
+          "id": "ep_HWJ7G79AZH0005",
+          "version": 1,
+          "status": "published"
+        },
+        {
+          "id": "ep_R382A2K1KS000C",
+          "version": 2,
+          "status": "published"
+        },
+        {
+          "id": "ep_VVCKTGP9CC000I",
+          "version": 3,
+          "status": "published"
+        }
+      ]
+    }
+  },
+  {
+    "name": "05-safe-retry",
+    "uiRead": true,
+    "state": {
+      "held": false,
+      "dropNext": false,
+      "requests": [
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/v1/worlds",
+          "status": 202,
+          "commandId": "cmd_mv8h66xrqr2lc1",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h66xrqr2lc1",
+            "mode": "surprise"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h6uw30rooor",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h6uw30rooor",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 1,
+            "choiceId": "brief_staff"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h86lr3cmao9",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h86lr3cmao9",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 2,
+            "choiceId": "brief_staff"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h86lr3cmao9",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h86lr3cmao9",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 2,
+            "choiceId": "brief_staff"
+          }
+        }
+      ],
+      "worlds": [
+        {
+          "id": "world_0EG47SAH1B0001",
+          "status": "active",
+          "version": 3,
+          "replay": true
+        }
+      ],
+      "episodes": [
+        {
+          "id": "ep_HWJ7G79AZH0005",
+          "version": 1,
+          "status": "published"
+        },
+        {
+          "id": "ep_R382A2K1KS000C",
+          "version": 2,
+          "status": "published"
+        },
+        {
+          "id": "ep_VVCKTGP9CC000I",
+          "version": 3,
+          "status": "published"
+        }
+      ]
+    }
+  },
+  {
+    "name": "failure",
+    "uiRead": true,
+    "state": {
+      "held": false,
+      "dropNext": false,
+      "requests": [
+        {
+          "path": "/dev/token",
+          "status": 200
+        },
+        {
+          "path": "/v1/worlds",
+          "status": 202,
+          "commandId": "cmd_mv8h66xrqr2lc1",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h66xrqr2lc1",
+            "mode": "surprise"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h6uw30rooor",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h6uw30rooor",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 1,
+            "choiceId": "brief_staff"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h86lr3cmao9",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h86lr3cmao9",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 2,
+            "choiceId": "brief_staff"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/choices",
+          "status": 200,
+          "commandId": "cmd_mv8h86lr3cmao9",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8h86lr3cmao9",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 2,
+            "choiceId": "brief_staff"
+          }
+        },
+        {
+          "path": "/v1/worlds/world_0EG47SAH1B0001/pause",
+          "status": 200,
+          "commandId": "cmd_mv8hatmq8hptdc",
+          "body": {
+            "schemaVersion": "1.0",
+            "commandId": "cmd_mv8hatmq8hptdc",
+            "actorIdentityId": "idn_93QW4E7ABY0002",
+            "expectedWorldVersion": 3
+          }
+        }
+      ],
+      "worlds": [
+        {
+          "id": "world_0EG47SAH1B0001",
+          "status": "paused",
+          "version": 3,
+          "replay": true
+        }
+      ],
+      "episodes": [
+        {
+          "id": "ep_HWJ7G79AZH0005",
+          "version": 1,
+          "status": "published"
+        },
+        {
+          "id": "ep_R382A2K1KS000C",
+          "version": 2,
+          "status": "published"
+        },
+        {
+          "id": "ep_VVCKTGP9CC000I",
+          "version": 3,
+          "status": "published"
+        }
+      ]
+    }
+  }
+]

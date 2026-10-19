@@ -1,0 +1,14 @@
+{
+  "stamp": "2026-10-13T00-26-56-542Z",
+  "fontScale": "",
+  "baseUrl": "http://10.0.2.2:3100",
+  "checks": 112,
+  "passed": 111,
+  "failures": [
+    {
+      "screen": "UI04 after the choice",
+      "what": "the next episode is on screen (Episode 21)",
+      "saw": "                                                                The Glass Harbor"
+    }
+  ]
+}

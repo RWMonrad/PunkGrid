@@ -1,0 +1,1405 @@
+{
+  "steps": [
+    {
+      "name": "intro-early",
+      "time": 534.6000000238419,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": false,
+      "preloader": {
+        "display": "flex",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "0",
+          "transform": "matrix(1, 0, 0, 1, 0, 86.9344)",
+          "rect": {
+            "x": 292.109375,
+            "y": 363.98126220703125,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "0",
+          "transform": "matrix(1, 0, 0, 1, 0, 86.9344)",
+          "rect": {
+            "x": 308.640625,
+            "y": 443.01251220703125,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "0",
+      "buttons": "0",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL"
+    },
+    {
+      "name": "intro-mid",
+      "time": 1005.6000000238419,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "0.909669",
+          "transform": "matrix(1, 0, 0, 1, 0, 6.73714)",
+          "rect": {
+            "x": 292.109375,
+            "y": 283.7840270996094,
+            "w": 855.765625,
+            "h": 79.03121948242188
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "0.690434",
+          "transform": "matrix(1, 0, 0, 1, 0, 17.2284)",
+          "rect": {
+            "x": 308.640625,
+            "y": 373.3065490722656,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "0",
+      "buttons": "0",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL"
+    },
+    {
+      "name": "intro-late",
+      "time": 2056.2999999523163,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": 277.046875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": 356.078125,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "0.999952",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL"
+    },
+    {
+      "name": "intro-settled",
+      "time": 3952.899999976158,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": 277.046875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": 356.078125,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL"
+    },
+    {
+      "name": "nav-engine",
+      "time": 6684.699999928474,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 2928,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": -1721.753173828125,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": -1642.721923828125,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 03 / 09  ·  THE ENGINE",
+      "link": {
+        "x": 552.25,
+        "y": 38.09375,
+        "hit": true,
+        "text": "ENGINE",
+        "href": "#engine"
+      },
+      "target": {
+        "targetTop": -0.328125,
+        "heading": "One Engine.\nChoices With Weight.",
+        "headingTop": 193,
+        "headingBottom": 336.34375,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "nav-worlds",
+      "time": 9424,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 4638,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": -3431.753173828125,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": -3352.721923828125,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 04 / 09  ·  THE HARBOR",
+      "link": {
+        "x": 643.84375,
+        "y": 38.09375,
+        "hit": true,
+        "text": "WORLDS",
+        "href": "#worlds"
+      },
+      "target": {
+        "targetTop": -0.328125,
+        "heading": "The Glass Harbor",
+        "headingTop": 189.59375,
+        "headingBottom": 271.515625,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "nav-cast",
+      "time": 12129,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 7338,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": -6131.7529296875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": -6052.7216796875,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 05 / 09  ·  THE CAST",
+      "link": {
+        "x": 725.5078125,
+        "y": 38.09375,
+        "hit": true,
+        "text": "CAST",
+        "href": "#characters"
+      },
+      "target": {
+        "targetTop": -0.328125,
+        "heading": "People of the Harbor",
+        "headingTop": 193.265625,
+        "headingBottom": 270.0625,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "nav-choices",
+      "time": 14846.600000023842,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 8087,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": -6880.7529296875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": -6801.7216796875,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 06 / 09  ·  THE CHOICE",
+      "link": {
+        "x": 812.1328125,
+        "y": 38.09375,
+        "hit": true,
+        "text": "CHOICES",
+        "href": "#choices"
+      },
+      "target": {
+        "targetTop": -0.375,
+        "heading": "Choices\nShape Worlds.",
+        "headingTop": 185.15625,
+        "headingBottom": 328.5,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "nav-art",
+      "time": 17622.299999952316,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 11137,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": -9930.7529296875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": -9851.7216796875,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 08 / 09  ·  THE GALLERY",
+      "link": {
+        "x": 893.7890625,
+        "y": 38.09375,
+        "hit": true,
+        "text": "ART",
+        "href": "#gallery"
+      },
+      "target": {
+        "targetTop": 0.015625,
+        "heading": "Every Pixel Tells a Story.",
+        "headingTop": 161.609375,
+        "headingBottom": 233.28125,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "nav-download",
+      "time": 20369.799999952316,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 11916,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": -10709.7529296875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": -10630.7216796875,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 09 / 09  ·  THE BEGINNING",
+      "link": {
+        "x": 1322.8125,
+        "y": 36.3984375,
+        "hit": true,
+        "text": "RELEASE STATUS",
+        "href": "#cta"
+      },
+      "target": {
+        "targetTop": 0.28125,
+        "heading": "Your Next Life\nIs Taking Shape.",
+        "headingTop": 330.4375,
+        "headingBottom": 473.78125,
+        "headingOpacity": "1",
+        "contentOpacity": "0.999",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "nav-home",
+      "time": 23166.699999928474,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": 277.046875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": 356.078125,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL",
+      "link": {
+        "x": 112.75,
+        "y": 36.390625,
+        "hit": true,
+        "text": "PUNKGRID",
+        "href": "#hero"
+      },
+      "target": {
+        "targetTop": 0,
+        "heading": "Live a Thousand Lives.\nEvery Choice Matters.",
+        "headingTop": 277.046875,
+        "headingBottom": 442.390625,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "hero-enter-grid",
+      "time": 25882.699999928474,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 900,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": -154.953125,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": -75.921875,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 02 / 09  ·  THE PREMISE",
+      "link": {
+        "x": 834.875,
+        "y": 595.890625,
+        "hit": true,
+        "text": "ENTER THE GRID",
+        "href": "#manifesto"
+      },
+      "target": {
+        "targetTop": 0,
+        "heading": "Your reality is only\none of many.",
+        "headingTop": 372.328125,
+        "headingBottom": 515.671875,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "hero-return-home",
+      "time": 28639.299999952316,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": 277.046875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": 356.078125,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL",
+      "link": {
+        "x": 112.75,
+        "y": 36.390625,
+        "hit": true,
+        "text": "PUNKGRID",
+        "href": "#hero"
+      },
+      "target": {
+        "targetTop": 0,
+        "heading": "Live a Thousand Lives.\nEvery Choice Matters.",
+        "headingTop": 277.046875,
+        "headingBottom": 442.390625,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "hero-release-status",
+      "time": 31357,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 11916,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 292.109375,
+            "y": -10776.7529296875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 308.640625,
+            "y": -10697.7216796875,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 09 / 09  ·  THE BEGINNING",
+      "link": {
+        "x": 604.09375,
+        "y": 595.890625,
+        "hit": true,
+        "text": "RELEASE STATUS",
+        "href": "#cta"
+      },
+      "target": {
+        "targetTop": 0.28125,
+        "heading": "Your Next Life\nIs Taking Shape.",
+        "headingTop": 330.4375,
+        "headingBottom": 473.78125,
+        "headingOpacity": "1",
+        "contentOpacity": "0.999",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "release-status",
+      "text": "SCENE 09 · RELEASE STATUS\nYour Next Life\nIs Taking Shape.\n\nPunkGrid is in development for iOS and Android. Store downloads are not available yet.\n\nNOT YET AVAILABLE\nApp Store\nNOT YET AVAILABLE\nGoogle Play",
+      "stores": [
+        {
+          "tag": "DIV",
+          "text": "NOT YET AVAILABLE\nApp Store",
+          "tabIndex": -1,
+          "role": null,
+          "cursor": "default"
+        },
+        {
+          "tag": "DIV",
+          "text": "NOT YET AVAILABLE\nGoogle Play",
+          "tabIndex": -1,
+          "role": null,
+          "cursor": "default"
+        }
+      ],
+      "emptyLinks": 0,
+      "brokenAnchors": [],
+      "schemas": [
+        {
+          "@context": "https://schema.org",
+          "@type": "MobileApplication",
+          "name": "PunkGrid",
+          "operatingSystem": "iOS, Android",
+          "applicationCategory": "GameApplication",
+          "genre": "Narrative Game",
+          "description": "Narrative game in development for iOS and Android. Choices shape resources, relationships, and story arcs through deterministic simulation and AI prose. Store downloads are not available yet.",
+          "url": "https://punkgrid.com"
+        }
+      ],
+      "status": "IN DEVELOPMENT"
+    },
+    {
+      "name": "mobile-enter-grid",
+      "time": 4779.399999976158,
+      "width": 390,
+      "height": 844,
+      "scrollY": 844,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 32,
+            "y": -225.3968505859375,
+            "w": 326,
+            "h": 131.015625
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 32,
+            "y": -94.3812255859375,
+            "w": 326,
+            "h": 87.34375
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "none",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 02 / 09  ·  THE PREMISE",
+      "link": {
+        "x": 195,
+        "y": 637.21875,
+        "hit": true,
+        "text": "ENTER THE GRID",
+        "href": "#manifesto"
+      },
+      "target": {
+        "targetTop": 0,
+        "heading": "Your reality is only\none of many.",
+        "headingTop": 376.15936279296875,
+        "headingBottom": 444.25311279296875,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 92.21875
+      }
+    },
+    {
+      "name": "mobile-home",
+      "time": 7287.299999952316,
+      "width": 390,
+      "height": 844,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 32,
+            "y": 179.703125,
+            "w": 326,
+            "h": 131.015625
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 32,
+            "y": 310.71875,
+            "w": 326,
+            "h": 87.34375
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "none",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL",
+      "link": {
+        "x": 112.75,
+        "y": 45.609375,
+        "hit": true,
+        "text": "PUNKGRID",
+        "href": "#hero"
+      },
+      "target": {
+        "targetTop": 0,
+        "heading": "Live a Thousand Lives.\nEvery Choice Matters.",
+        "headingTop": 179.703125,
+        "headingBottom": 402.09375,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 92.21875
+      }
+    },
+    {
+      "name": "mobile-download",
+      "time": 9786.399999976158,
+      "width": 390,
+      "height": 844,
+      "scrollY": 12222,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": false,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 32,
+            "y": -11317.396484375,
+            "w": 326,
+            "h": 131.015625
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "matrix(1, 0, 0, 1, 0, 0)",
+          "rect": {
+            "x": 32,
+            "y": -11186.380859375,
+            "w": 326,
+            "h": 87.34375
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "block",
+      "navLinks": "none",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 09 / 09  ·  THE BEGINNING",
+      "link": {
+        "x": 275.75,
+        "y": 45.609375,
+        "hit": true,
+        "text": "RELEASE STATUS",
+        "href": "#cta"
+      },
+      "target": {
+        "targetTop": -0.1875,
+        "heading": "Your Next Life\nIs Taking Shape.",
+        "headingTop": 288.87188720703125,
+        "headingBottom": 356.96563720703125,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 92.21875
+      }
+    },
+    {
+      "name": "reduced-mobile-early",
+      "time": 187.60000002384186,
+      "width": 390,
+      "height": 844,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": true,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 32,
+            "y": 179.703125,
+            "w": 326,
+            "h": 131.015625
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 32,
+            "y": 310.71875,
+            "w": 326,
+            "h": 87.34375
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "none",
+      "navLinks": "none",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL"
+    },
+    {
+      "name": "reduced-mobile-settled",
+      "time": 1195,
+      "width": 390,
+      "height": 844,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": true,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 32,
+            "y": 179.703125,
+            "w": 326,
+            "h": 131.015625
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 32,
+            "y": 310.71875,
+            "w": 326,
+            "h": 87.34375
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "none",
+      "navLinks": "none",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL"
+    },
+    {
+      "name": "reduced-mobile-enter",
+      "time": 3598.399999976158,
+      "width": 390,
+      "height": 844,
+      "scrollY": 844,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": true,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 32,
+            "y": -664.296875,
+            "w": 326,
+            "h": 131.015625
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 32,
+            "y": -533.28125,
+            "w": 326,
+            "h": 87.34375
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "none",
+      "navLinks": "none",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 02 / 09  ·  THE PREMISE",
+      "link": {
+        "x": 195,
+        "y": 637.21875,
+        "hit": true,
+        "text": "ENTER THE GRID",
+        "href": "#manifesto"
+      },
+      "target": {
+        "targetTop": 0,
+        "heading": "Your reality is only\none of many.",
+        "headingTop": 342.359375,
+        "headingBottom": 410.453125,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 92.21875
+      }
+    },
+    {
+      "name": "reduced-worlds-390-0",
+      "text": "Singapore",
+      "x": 32,
+      "y": 251.734375,
+      "right": 358,
+      "bottom": 591.734375,
+      "navBottom": 92.21875,
+      "width": 390,
+      "height": 844,
+      "hit": true,
+      "transform": "none",
+      "overflow": 0
+    },
+    {
+      "name": "reduced-worlds-390-1",
+      "text": "Copenhagen",
+      "x": 32,
+      "y": 258.328125,
+      "right": 358,
+      "bottom": 598.328125,
+      "navBottom": 92.21875,
+      "width": 390,
+      "height": 844,
+      "hit": true,
+      "transform": "none",
+      "overflow": 0
+    },
+    {
+      "name": "reduced-worlds-390-2",
+      "text": "Lagos",
+      "x": 32,
+      "y": 257.921875,
+      "right": 358,
+      "bottom": 597.921875,
+      "navBottom": 92.21875,
+      "width": 390,
+      "height": 844,
+      "hit": true,
+      "transform": "none",
+      "overflow": 0
+    },
+    {
+      "name": "reduced-worlds-390-3",
+      "text": "Mars",
+      "x": 32,
+      "y": 257.515625,
+      "right": 358,
+      "bottom": 597.515625,
+      "navBottom": 92.21875,
+      "width": 390,
+      "height": 844,
+      "hit": true,
+      "transform": "none",
+      "overflow": 0
+    },
+    {
+      "name": "reduced-desktop",
+      "time": 1167.4000000953674,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 0,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": true,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 292.109375,
+            "y": 277.046875,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 308.640625,
+            "y": 356.078125,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "none",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 01 / 09  ·  THE PORTAL"
+    },
+    {
+      "name": "reduced-desktop-engine",
+      "time": 3832.4000000953674,
+      "width": 1440,
+      "height": 900,
+      "scrollY": 2928,
+      "url": "http://127.0.0.1:4310/",
+      "reduced": true,
+      "loaded": true,
+      "preloader": {
+        "display": "none",
+        "opacity": "1",
+        "visibility": "visible"
+      },
+      "title": [
+        {
+          "text": "Live a Thousand Lives.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 292.109375,
+            "y": -2650.953125,
+            "w": 855.765625,
+            "h": 79.03125
+          }
+        },
+        {
+          "text": "Every Choice Matters.",
+          "opacity": "1",
+          "transform": "none",
+          "rect": {
+            "x": 308.640625,
+            "y": -2571.921875,
+            "w": 822.6875,
+            "h": 79.03125
+          }
+        }
+      ],
+      "tagline": "1",
+      "buttons": "1",
+      "canvas": "none",
+      "navLinks": "flex",
+      "overflow": 0,
+      "brokenImages": [],
+      "hud": "SCENE 03 / 09  ·  THE ENGINE",
+      "link": {
+        "x": 552.25,
+        "y": 38.09375,
+        "hit": true,
+        "text": "ENGINE",
+        "href": "#engine"
+      },
+      "target": {
+        "targetTop": -0.328125,
+        "heading": "One Engine.\nChoices With Weight.",
+        "headingTop": 157,
+        "headingBottom": 300.34375,
+        "headingOpacity": "1",
+        "contentOpacity": "1",
+        "navBottom": 73.796875
+      }
+    },
+    {
+      "name": "reduced-worlds-1440-0",
+      "text": "Singapore",
+      "x": 57.59375,
+      "y": 229.890625,
+      "right": 369.59375,
+      "bottom": 669.890625,
+      "navBottom": 73.796875,
+      "width": 1440,
+      "height": 900,
+      "hit": true,
+      "transform": "none",
+      "overflow": 0
+    },
+    {
+      "name": "reduced-worlds-1440-1",
+      "text": "Copenhagen",
+      "x": 395.1875,
+      "y": 229.890625,
+      "right": 707.203125,
+      "bottom": 669.890625,
+      "navBottom": 73.796875,
+      "width": 1440,
+      "height": 900,
+      "hit": true,
+      "transform": "none",
+      "overflow": 0
+    },
+    {
+      "name": "reduced-worlds-1440-2",
+      "text": "Lagos",
+      "x": 732.796875,
+      "y": 229.890625,
+      "right": 1044.796875,
+      "bottom": 669.890625,
+      "navBottom": 73.796875,
+      "width": 1440,
+      "height": 900,
+      "hit": true,
+      "transform": "none",
+      "overflow": 0
+    },
+    {
+      "name": "reduced-worlds-1440-3",
+      "text": "Mars",
+      "x": 1070.390625,
+      "y": 229.890625,
+      "right": 1382.40625,
+      "bottom": 669.890625,
+      "navBottom": 73.796875,
+      "width": 1440,
+      "height": 900,
+      "hit": true,
+      "transform": "none",
+      "overflow": 0
+    }
+  ],
+  "errors": [],
+  "networkFailures": []
+}

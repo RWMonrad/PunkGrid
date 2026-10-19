@@ -1,0 +1,19 @@
+{
+  "stamp": "2026-10-14T13-24-10-885Z",
+  "fontScale": "",
+  "baseUrl": "http://10.0.2.2:3100",
+  "checks": 125,
+  "passed": 123,
+  "failures": [
+    {
+      "screen": "UI03 setup",
+      "what": "the premise band is painted, not a flat plate",
+      "saw": "the nodes that bracket it are not on the screen"
+    },
+    {
+      "screen": "UI03 setup — cast",
+      "what": "the row of cast portraits is painted, not a flat plate",
+      "saw": "the nodes that bracket it are not on the screen"
+    }
+  ]
+}

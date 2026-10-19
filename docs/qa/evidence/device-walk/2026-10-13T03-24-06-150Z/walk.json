@@ -1,0 +1,19 @@
+{
+  "stamp": "2026-10-13T03-24-06-150Z",
+  "fontScale": "",
+  "baseUrl": "http://10.0.2.2:3100",
+  "checks": 123,
+  "passed": 121,
+  "failures": [
+    {
+      "screen": "UI01 welcome — plates",
+      "what": "the row of place plates is painted, not a flat plate",
+      "saw": "1 distinct colours in x=134..1210 y=2136..2137 (between “THE GLASS HARBOR · WHERE A LIFE CAN START” (y2=2118) and “Singapore” (y1=2154))"
+    },
+    {
+      "screen": "UI03 setup — cast",
+      "what": "the row of cast portraits is painted, not a flat plate",
+      "saw": "1 distinct colours in x=134..1210 y=2783..2784 (between “Who else is in it” (y2=2713) and “Alex Vale · you. Founder / CEO” (y1=2852))"
+    }
+  ]
+}
