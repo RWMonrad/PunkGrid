@@ -117,11 +117,19 @@ describe('Prompt assembly (contract 10)', () => {
 
     const data = wireData(stub.bodies[0]!);
     expect(Object.keys(data).sort()).toEqual([
-      'allowed_choice_ids', 'authorized_pov_facts', 'character_profiles', 'committed_version', 'event_excerpts',
-      'event_ids', 'style_constraints', 'token_budget', 'world_id', 'world_time',
+      'allowed_choice_ids', 'arc_statuses', 'authorized_fact_labels', 'authorized_pov_facts',
+      'character_profiles', 'character_titles_and_goals', 'committed_version', 'event_excerpts',
+      'event_ids', 'relationship_values', 'resource_values', 'style_constraints', 'token_budget',
+      'world_id', 'world_time',
     ]);
     expect(data.authorized_pov_facts).toContain('fact_offer');
     expect(data.authorized_pov_facts).not.toContain('fact_secret_link');
+    expect(data.authorized_fact_labels).toHaveProperty('fact_offer');
+    expect(data.authorized_fact_labels).not.toHaveProperty('fact_secret_link');
+    expect(data.character_titles_and_goals).toHaveProperty('char_player');
+    expect(data.relationship_values).toHaveProperty('char_mara');
+    expect(data.resource_values).toHaveProperty('cash');
+    expect(data.arc_statuses).toHaveProperty('arc_acquisition');
     expect(JSON.stringify(sent).toLowerCase()).not.toContain('procurement link');
   });
 

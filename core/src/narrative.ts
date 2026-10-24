@@ -31,6 +31,17 @@ export interface NarrativeRequest {
   tokenBudget: number;
   worldTime: ISOTime;
   eventExcerpts: { id: ID; type: string }[];
+  /** Enrichment: fact labels for authorized facts only. Never includes unauthorised
+   *  fact labels, since labels are the leak surface (secretMarkers is built from them). */
+  authorizedFactLabels?: Record<ID, string>;
+  /** Enrichment: character titles and goals from the rulepack cast. */
+  characterTitlesAndGoals?: Record<ID, { title?: string; goals: string[] }>;
+  /** Enrichment: player's outbound relationship values at this snapshot. */
+  relationshipValues?: Record<ID, { dimension: string; value: number }>;
+  /** Enrichment: player character's resources at this snapshot. */
+  resourceValues?: Record<string, number>;
+  /** Enrichment: arc statuses at this snapshot (open/progressed only, not locked). */
+  arcStatuses?: Record<ID, string>;
 }
 
 export interface NarrativeResponse {

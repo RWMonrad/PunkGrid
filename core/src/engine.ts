@@ -1054,6 +1054,35 @@ export class Engine {
     const secretMarkers = new Map<ID, string>();
     for (const f of this.store.facts.values()) if (f.worldId === world.id) secretMarkers.set(f.factId, f.sensitivePhrase ?? f.label);
 
+    // Enrichment: build the data the prompt needs to write scene prose.
+    // All fields are read from the snapshot at the episode's committed version,
+    // POV-filtered, and no key comes from a client. The payload stops being a skeleton.
+    const authorizedFactLabels: Record<ID, string> = {};
+    for (const factId of authorizedPovFacts) {
+      const fact = this.store.facts.get(`${world.id}|${factId}`);
+      if (fact) authorizedFactLabels[factId] = fact.label;
+    }
+    const characterTitlesAndGoals: Record<ID, { title?: string; goals: string[] }> = {};
+    for (const char of this.store.characters.values()) {
+      if (char.worldId !== world.id) continue;
+      const state = snap.state.characters[char.id];
+      if (!state) continue;
+      const cast = this.pack.templates[0]?.characters.find((c) => c.id === char.id);
+      if (cast) characterTitlesAndGoals[char.id] = { title: cast.profile?.title, goals: state.goals };
+    }
+    const relationshipValues: Record<ID, { dimension: string; value: number }> = {};
+    for (const [key, value] of Object.entries(snap.state.relationships)) {
+      const parts = key.split('|');
+      if (parts.length !== 3) continue;
+      const [actor, target, dimension] = parts;
+      if (actor === player) relationshipValues[target] = { dimension, value };
+    }
+    const resourceValues = snap.state.characters[player]?.resources ?? {};
+    const arcStatuses: Record<ID, string> = {};
+    for (const [arcId, status] of Object.entries(snap.state.arcStatuses)) {
+      if (status !== 'locked') arcStatuses[arcId] = status;
+    }
+
     const unitCost = 0.004;
     // Which prompt the process will actually send; a fake provider that names no
     // version stays attributed to the engine's built-in placeholder.
@@ -1077,6 +1106,7 @@ export class Engine {
       styleConstraints: this.pack.style ?? DEFAULT_STYLE,
       allowedChoiceIds, promptVersion, tokenBudget: 2000, worldTime: snap.state.worldTime,
       eventExcerpts: events.map((e) => ({ id: e.eventId, type: e.type })),
+      authorizedFactLabels, characterTitlesAndGoals, relationshipValues, resourceValues, arcStatuses,
     };
 
     for (let attempt = 1; attempt <= 2; attempt += 1) {
